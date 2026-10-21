@@ -1,0 +1,39 @@
+# Ortam ve Gizli Anahtarlar
+.env
+.env.local
+
+# Python Derleme ve Sanal Ortamlar
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# PyInstaller ve Yürütülebilir Çıktılar
+build/
+dist/
+*.exe
+*.dll
+*.spec.bak
+
+# Altar Çalışma Zamanı Verileri ve İzolasyon Kasaları
+.altar_hafiza/
+.altar_karantina/
+Altar_Karantina/
+Altar_Ransomware_Tuzagi/
+Ag_Analiz_Raporlari/
+Kamera_Kayitlari/
+Ses_Kayitlari/
+Video_Kayitlari/
+scraped_archive/
+data/chroma_memory/
+*.log
+
+# İşletim Sistemi Dosyaları
+Thumbs.db
+Desktop.ini
+.DS_Store
