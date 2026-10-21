@@ -8,7 +8,12 @@ import ollama
 
 _RE_PYTHON_BLOCK = re.compile(r'```python\s*(.*?)```', re.DOTALL | re.IGNORECASE)
 _RE_JSON_OBJ = re.compile(r'\{.*\}', re.DOTALL)
-_RE_THOUGHT_TAGS = re.compile(r'<(düşünce|think|durum_analizi|kural_denetimi)>.*?</\1>', re.DOTALL | re.IGNORECASE)
+_RE_THOUGHT_TAGS = re.compile(
+    r'<(think|düşünce|thought|durum_analizi|kural_denetimi)>.*?</\1>|'
+    r'<think>.*?$|'
+    r'(?is)^\s*(Thinking Process|Düşünme Süreci|Thought Process):.*?(?:\n\s*\n\s*(?=[A-ZÇĞİÖŞÜa-zçğıöşü])|\Z)',
+    re.DOTALL | re.IGNORECASE
+)
 
 
 class AltarAgenticCore:
@@ -55,7 +60,9 @@ class AltarAgenticCore:
                 resp = requests.post("http://localhost:11434/api/generate", json=payload, timeout=120)
                 if resp.status_code == 200:
                     veri = resp.json()
-                    ham = veri.get("response", "") or veri.get("thinking", "")
+                    ham = veri.get("response", "")
+                    if not ham and veri.get("thinking", ""):
+                        ham = _RE_THOUGHT_TAGS.sub("", veri.get("thinking", "")).strip()
             except Exception:
                 if json_modu:
                     yanit = self.client.generate(model=model_adi, prompt=prompt, format="json", options=opts)

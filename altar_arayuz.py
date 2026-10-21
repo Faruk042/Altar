@@ -32,7 +32,12 @@ import customtkinter as ctk
 # ARAYÜZ REGEX DESENLERİ VE DONANIM KONTROLLERİ
 # =========================================================
 _RE_ANY_CODE_BLOCK = re.compile(r'```(.*?)```', re.DOTALL)
-_RE_THOUGHT_CLEAN = re.compile(r'<(düşünce|durum_analizi|kural_denetimi)>.*?</\1>', re.DOTALL)
+_RE_THOUGHT_CLEAN = re.compile(
+    r'<(think|düşünce|thought|durum_analizi|kural_denetimi)>.*?</\1>|'
+    r'<think>.*?$|'
+    r'(?is)^\s*(Thinking Process|Düşünme Süreci|Thought Process):.*?(?:\n\s*\n\s*(?=[A-ZÇĞİÖŞÜa-zçğıöşü])|\Z)',
+    re.DOTALL | re.IGNORECASE
+)
 _RE_GCODE_COMMENT = re.compile(r'\(.*?\)')
 
 if getattr(sys, "frozen", False):

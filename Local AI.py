@@ -1505,6 +1505,7 @@ class AltarMainUI(AltarArayuzMerkezi):
             "model": model_adi,
             "messages": temiz_mesajlar,
             "stream": True,
+            "think": False,
             "options": options or {"temperature": 0.35, "num_ctx": 2048}
         }
 
@@ -1529,6 +1530,7 @@ class AltarMainUI(AltarArayuzMerkezi):
                         "model": model_adi,
                         "messages": kurtarma_msgs,
                         "stream": True,
+                        "think": False,
                         "options": {"temperature": 0.35, "num_ctx": 2048}
                     },
                     stream=True,
@@ -1944,7 +1946,8 @@ class AltarMainUI(AltarArayuzMerkezi):
                             return
 
                         mesaj_obj = parca.get('message', {}) if isinstance(parca, dict) else {}
-                        kelime = mesaj_obj.get('content', '') or mesaj_obj.get('thinking', '')
+                        # Sadece kullanıcıya sunulacak içerik (content) alınır; iç düşünme süreci (thinking) filtrelenir!
+                        kelime = mesaj_obj.get('content', '')
                         if not kelime:
                             continue
 
@@ -2015,19 +2018,21 @@ class AltarMainUI(AltarArayuzMerkezi):
                                     "model": model_adi,
                                     "messages": gonderilecek_mesajlar[-2:] if len(gonderilecek_mesajlar) > 2 else gonderilecek_mesajlar,
                                     "stream": False,
+                                    "think": False,
                                     "options": {"temperature": 0.3, "num_ctx": 2048, "num_predict": 400}
                                 },
                                 timeout=90
                             )
                             if yedek_yanit.status_code == 200:
                                 y_mesaj = yedek_yanit.json().get("message", {})
-                                kurtarilan = (y_mesaj.get("content", "") or y_mesaj.get("thinking", "")).strip()
+                                kurtarilan = y_mesaj.get("content", "").strip()
                                 if kurtarilan:
                                     tam_cevap = kurtarilan
                                     self.update_chat_safe(kurtarilan)
                         except Exception:
                             pass
 
+                tam_cevap = _RE_THOUGHT_CLEAN.sub("", tam_cevap).strip()
                 tam_cevap_temiz = tam_cevap.strip()
                 if tam_cevap_temiz == onceki_ajan_istegi and tam_cevap_temiz != "":
                     self.update_chat_safe(
