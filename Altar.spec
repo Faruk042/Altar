@@ -26,6 +26,7 @@ for py_file in glob.glob(os.path.join(proje_kok, "*.py")):
 
 # CustomTkinter tema ve stil JSON dosyaları
 datas += collect_data_files("customtkinter")
+datas += collect_data_files("pyqtgraph")
 
 # 2. Birlikte paketlenecek ikili programlar (ffmpeg, ffprobe)
 binaries = []

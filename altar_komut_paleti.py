@@ -85,7 +85,9 @@ class AltarKomutPaletiModal(ctk.CTkToplevel):
         if sorgu:
             self.filtreli_eylemler = [
                 e for e in self.eylemler
-                if sorgu in e["baslik"].lower() or sorgu in e.get("aciklama", "").lower() or sorgu in e.get("kategori", "").lower()
+                if sorgu in str(e.get("baslik") or e.get("ad") or "").lower()
+                or sorgu in e.get("aciklama", "").lower()
+                or sorgu in e.get("kategori", "").lower()
             ]
         else:
             self.filtreli_eylemler = list(self.eylemler)
@@ -111,9 +113,12 @@ class AltarKomutPaletiModal(ctk.CTkToplevel):
             satir.pack(fill="x", padx=4, pady=2)
             satir.pack_propagate(False)
 
+            ikon = str(e.get("ikon") or "⚡")
+            baslik = str(e.get("baslik") or e.get("ad") or "Komut")
+
             btn = ctk.CTkButton(
                 satir,
-                text=f"{e['ikon']}  {e['baslik']}",
+                text=f"{ikon}  {baslik}",
                 anchor="w",
                 fg_color="transparent",
                 hover_color="#2563EB" if secili_mi else "#1E293B",
@@ -147,7 +152,7 @@ class AltarKomutPaletiModal(ctk.CTkToplevel):
     def _seciliyi_calistir(self) -> None:
         if 0 <= self.secili_indeks < len(self.filtreli_eylemler):
             eylem = self.filtreli_eylemler[self.secili_indeks]
-            fonk = eylem.get("aksiyon")
+            fonk = eylem.get("aksiyon") or eylem.get("komut")
             self.destroy()
             if callable(fonk):
                 fonk()
