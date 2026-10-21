@@ -35,6 +35,10 @@ def _pyqt5_3d_sinifini_hazirla():
         )
         from PyQt6.QtGui import QColor, QTextFormat, QKeySequence, QAction
         from PyQt6.QtCore import Qt, QTimer
+        if not hasattr(Qt, "AlignCenter"):
+            setattr(Qt, "AlignCenter", Qt.AlignmentFlag.AlignCenter)
+        if not hasattr(Qt, "Horizontal"):
+            setattr(Qt, "Horizontal", Qt.Orientation.Horizontal)
         import pyqtgraph.opengl as gl
         import pyqtgraph as pg
     except ImportError:

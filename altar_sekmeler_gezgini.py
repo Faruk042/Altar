@@ -32,9 +32,10 @@ class AltarSekmelerVeOzelliklerGezgini(ctk.CTkToplevel):
     listeleyen, tek tıkla geçiş yaptıran interaktif cam navigasyon penceresi.
     """
 
-    def __init__(self, parent: Any) -> None:
+    def __init__(self, parent: Any, on_sekme_sec: Optional[Callable] = None, **kwargs) -> None:
         super().__init__(parent)
         self.parent = parent
+        self.on_sekme_sec = on_sekme_sec
 
         self.title("🗂️ Altar Sekmeler & Açık Özellikler Gezgini")
         self.configure(fg_color="#070B14")

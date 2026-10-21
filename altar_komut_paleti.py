@@ -17,8 +17,10 @@ import customtkinter as ctk
 class AltarKomutPaletiModal(ctk.CTkToplevel):
     """Hızlı komut arama ve klavye odaklı çalıştırma paleti."""
 
-    def __init__(self, master: object, eylemler: List[Dict[str, Any]]) -> None:
+    def __init__(self, master: object, eylemler: Optional[List[Dict[str, Any]]] = None, **kwargs: Any) -> None:
         super().__init__(master)
+        if eylemler is None:
+            eylemler = kwargs.get("komutlar") or []
         self.eylemler = eylemler
         self.filtreli_eylemler = list(eylemler)
         self.secili_indeks = 0

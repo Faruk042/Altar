@@ -210,10 +210,10 @@ class AltarOturumYoneticisi:
 class AltarSohbetOturumlariModal(ctk.CTkToplevel):
     """Kullanıcının geçmiş sohbet oturumlarını listeleyen ve geri yükleyen görsel modal."""
 
-    def __init__(self, master: object, oturum_yoneticisi: AltarOturumYoneticisi, secim_callback: Any) -> None:
+    def __init__(self, master: object, oturum_yoneticisi: Optional[AltarOturumYoneticisi] = None, secim_callback: Any = None, on_oturum_sec: Any = None, **kwargs) -> None:
         super().__init__(master)
-        self.yonetici = oturum_yoneticisi
-        self.secim_callback = secim_callback
+        self.yonetici = oturum_yoneticisi or AltarOturumYoneticisi()
+        self.secim_callback = secim_callback or on_oturum_sec
         self.title("📂 Altar Sohbet Oturumları ve Geçmiş")
         self.geometry("740x520")
         self.minsize(620, 420)

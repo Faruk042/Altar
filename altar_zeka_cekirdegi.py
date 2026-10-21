@@ -11,8 +11,8 @@ _RE_JSON_OBJ = re.compile(r'\{.*\}', re.DOTALL)
 _RE_THOUGHT_TAGS = re.compile(
     r'<(think|düşünce|thought|durum_analizi|kural_denetimi)>.*?</\1>|'
     r'<think>.*?$|'
-    r'(?is)^\s*(Thinking Process|Düşünme Süreci|Thought Process):.*?(?:\n\s*\n\s*(?=[A-ZÇĞİÖŞÜa-zçğıöşü])|\Z)',
-    re.DOTALL | re.IGNORECASE
+    r'^\s*(?:Thinking Process|Düşünme Süreci|Thought Process):.*?(?:\n\s*\n\s*(?=[A-ZÇĞİÖŞÜa-zçğıöşü])|\Z)',
+    re.DOTALL | re.IGNORECASE | re.MULTILINE
 )
 
 

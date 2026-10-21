@@ -31,7 +31,8 @@ BTN_HOVER = "#007F50"
 
 class NasaScraperWindow(ctk.CTkToplevel):
     def __init__(self, main_app):
-        super().__init__(main_app)
+        master = main_app.root if hasattr(main_app, 'root') and not hasattr(main_app, 'tk') else main_app
+        super().__init__(master)
         self.main_app = main_app  # Ana uygulamanın referansını hafızaya alıyoruz
         self.title("Altar Web Veri Kazıyıcı, Kategorizasyon ve Telemetri Köprüsü")
 

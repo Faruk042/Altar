@@ -14,6 +14,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import threading
 from tkinter import messagebox
 from typing import Dict, List, Optional
@@ -24,10 +25,10 @@ import customtkinter as ctk
 class AltarPipYoneticisiModal(ctk.CTkToplevel):
     """Görsel Pip Paket Yönetim Penceresi."""
 
-    def __init__(self, master: object, python_exe: str) -> None:
+    def __init__(self, master: object, python_exe: Optional[str] = None) -> None:
         super().__init__(master)
-        self.python_exe = python_exe
-        self.title(f"📦 Altar Pip Paket Yöneticisi — ({os.path.basename(python_exe)})")
+        self.python_exe = python_exe or sys.executable
+        self.title(f"📦 Altar Pip Paket Yöneticisi — ({os.path.basename(self.python_exe)})")
         self.geometry("740x580")
         self.minsize(620, 480)
         self.configure(fg_color="#0B0F19")
