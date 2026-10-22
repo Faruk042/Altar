@@ -6,19 +6,27 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 
-proje_kok = os.path.abspath(r"e:\Gemini API\Dosyalama_Projesi_Guncel")
+try:
+    proje_kok = os.path.abspath(SPECPATH)
+except NameError:
+    proje_kok = os.path.abspath(os.path.dirname(__file__) if "__file__" in globals() else os.getcwd())
 
 # 1. Birlikte paketlenecek veri dosyaları (assets, config, veriler)
-datas = [
-    (os.path.join(proje_kok, "assets"), "assets"),
-    (os.path.join(proje_kok, "data"), "data"),
-    (os.path.join(proje_kok, ".env"), "."),
-    (os.path.join(proje_kok, "earth_horizon_bg.jpg"), "."),
-    (os.path.join(proje_kok, "supheli_bireysel_bilgisayarlar.txt"), "."),
-    (os.path.join(proje_kok, "supheli_sunucular.txt"), "."),
-    (os.path.join(proje_kok, "altar_app.ico"), "."),
-    (os.path.join(proje_kok, "images.jpg"), "."),
-]
+datas = []
+for rel_item, dest in [
+    ("assets", "assets"),
+    ("data", "data"),
+    (".env", "."),
+    (".env.example", "."),
+    ("earth_horizon_bg.jpg", "."),
+    ("supheli_bireysel_bilgisayarlar.txt", "."),
+    ("supheli_sunucular.txt", "."),
+    ("altar_app.ico", "."),
+    ("images.jpg", "."),
+]:
+    full_p = os.path.join(proje_kok, rel_item)
+    if os.path.exists(full_p):
+        datas.append((full_p, dest))
 
 # Dinamik yükleme (importlib spec_from_file_location) ile çağrılan yardımcı kod dosyaları
 for py_file in glob.glob(os.path.join(proje_kok, "*.py")):

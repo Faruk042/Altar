@@ -21,3 +21,4 @@ SpeechRecognition>=3.10.0
 python-dotenv>=1.0.0
 google-genai>=0.1.0
 pydivert>=2.1.0
+pyinstaller>=6.0.0

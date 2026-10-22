@@ -270,6 +270,23 @@ python "Local AI.py"
 ```
 Veya oluşturulan **`Altar`** kısayoluna çift tıklayarak tek tıkla başlatabilirsiniz.
 
+### 7. Tek Başına Çalışan EXE (Program) Oluşturma
+Projeyi Python ortamına bağımlı olmadan bağımsız bir masaüstü uygulaması (`.exe`) haline getirmek için iki pratik yöntem mevcuttur:
+
+#### Yöntem A: Tek Tıkla Otomatik Derleme (.bat)
+Proje kök dizinindeki `Altar_EXE_Olustur.bat` dosyasına çift tıklayın. Script gerekli bağımlılıkları denetler ve `dist/Altar/Altar.exe` programını sıfır hatayla üretir.
+
+#### Yöntem B: Terminal / Komut Satırından Derleme
+1. Proje bağımlılıklarını ve PyInstaller paketleyicisini yükleyin:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Altar'ın optimize edilmiş hazır spec yapılandırmasıyla derlemeyi başlatın:
+   ```bash
+   pyinstaller --noconfirm --clean Altar.spec
+   ```
+3. Derleme tamamlandığında bağımsız yürütülebilir programınız **`dist/Altar/Altar.exe`** konumunda hazır olacaktır! İsteğe bağlı olarak bu dosyaya masaüstü kısayolu oluşturabilirsiniz.
+
 ---
 
 ## 📄 Lisans
