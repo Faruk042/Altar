@@ -182,16 +182,25 @@ Talaşlı imalat ve makine mühendisliği iş akışları için iki boyutlu tak�
 
 ---
 
-### 15. 5-Katmanlı Gelişmiş Antivirüs, Honeypot & EDR Kalkanı
-Sistemi fidye yazılımlarına (Ransomware), truva atlarına ve zararlı scriptlere karşı koruyan 5-kademeli aktif savunma motorudur.
+### 15. Next-Gen Antivirüs, EDR Kalkanı & İleri Düzey Güvenlik Cephaneliği
+Sistemi fidye yazılımlarına (Ransomware), sıfır-gün tehditlerine, truva atlarına ve yetkisiz sızmalara karşı koruyan, sıfır-risk (salt-okunur ve defansif) ilkesiyle çalışan 5-kademeli EDR motoru ve 6 gelişmiş güvenlik aracından oluşan entegre siber güvenlik üssüdür.
 
 ![5-Katmanlı EDR Kalkanı](assets/readme_gorseller/15_edr_antivirus.png)
 
-1. **Katman 1:** Statik SHA-256 Tehdit İmza Taraması.
-2. **Katman 2:** Shannon Entropi Radarı (Fidye yazılımı kripto tespiti).
-3. **Katman 3:** AST Kod ve Script Analizörü.
-4. **Katman 4:** Honeypot / Yem Dosya Tuzağı (Fidye saldırısı algılandığı an süreci durdurur).
-5. **Katman 5:** İndirilenler & Otomatik Karantina Kalkanı (`.altar_karantina`).
+#### 🛡️ 5-Kademeli Çekirdek EDR Savunması:
+1. **Katman 1 (İmza & Hash):** Statik SHA-256 Tehdit İmza Taraması ve dosya bütünlük doğrulaması.
+2. **Katman 2 (Entropi Analizi):** Shannon Entropi Radarı ile şifrelenmiş/paketlenmiş fidye yazılımı ve trojan tespiti.
+3. **Katman 3 (Davranışsal LOLBins):** PowerShell, CMD, WScript gibi sistem araçlarının gizli parametrelerle (`-w hidden`, `-enc`) kullanımını yakalayan bellek bekçisi.
+4. **Katman 4 (Honeypot / Yem Koruması):** `Altar_Ransomware_Tuzagi` dizinindeki yem dosyaları denetler; fidye yazılımı şifreleme girişiminde bulunduğu an saldırgan süreci tespit eder ve askıya alır (Suspend).
+5. **Katman 5 (Otomatik Karantina):** İndirilenler klasörünü ve zararlı dosyaları güvenli AES-GCM şifreli `.altar_karantina` kasasına izole eder.
+
+#### 🚀 6 İleri Düzey Güvenlik ve Antivirüs Aracı (`altar_gelismis_guvenlik.py`):
+* 🧠 **AI Destekli Statik Sıfır-Gün Tehdit Açıklayıcısı:** Şüpheli dosyayı çalıştırmadan PE başlığını, Shannon entropisini, 15+ kritik Windows API çağrısını (`VirtualAllocEx`, `WriteProcessMemory`, `CreateRemoteThread`, `SetWindowsHookEx`), gömülü IP/URL adreslerini ve gizli script kalıplarını tarar. 0-100 risk puanı üretir ve Altar'ın yapay zekasına tek tıkla teknik Türkçe tehdit dökümü yorumlatır.
+* 🌲 **Canlı Ebeveyn-Çocuk Süreç Ağacı ve LOLBins Radarı:** Çalışan tüm süreçleri hiyerarşik üst-alt ağaç yapısında listeler. Kötüye kullanılan sistem araçlarını (LOLBins) ve şüpheli alt süreçleri görselleştirir. Kritik Windows süreçlerini koruyan beyaz liste güvencesiyle tek tıkla süreci **Askıya Alma (Suspend)**, **Devam Ettirme (Resume)** veya **Güvenle Sonlandırma (Kill)** imkanı tanır.
+* 🛡️ **Windows Otomatik Başlatma ve Kayıt Defteri Kalkanı (Autorun Sentinel):** `HKCU/HKLM Run`, `RunOnce` ve Kullanıcı/Sistem Başlangıç klasörlerini derinlemesine tarar. Temp dizininden veya şüpheli betik uzantılarından (`.vbs`, `.js`, `.bat`, `.ps1`) çalışan gizli kalıcılık (persistence) mekanizmalarını listeler.
+* 🔌 **Otomatik USB Aşı & Flaş Bellek Kalkanı:** Bilgisayara takılan çıkarılabilir USB sürücüleri anında algılar; gizli sistem dosyalarını ve kısayol virüslerini (`.lnk`) listeler. Tek tıkla USB belleğe aşı uygulayarak (korumalı salt-okunur `autorun.inf` yapısı) zararlıların flaş bellek üzerinden yayılmasını kesin olarak engeller.
+* 🌐 **C2 (Komuta Kontrol) ve Dış Ağ Sızıntı Avcısı:** Aktif dış ağ soketlerini (ESTABLISHED) anlık tarayarak bilinen truva atı ve C2 portları (4444, 1337, 31337, 6667, 8888, 5555 vb.) ile eşleştirir. Şüpheli dış IP bağlantılarını ve ilişkili süreci listeler; tek tıkla Windows Güvenlik Duvarı'nda engelleme olanağı sunar.
+* 🔒 **Kritik Sistem Dosyası Bütünlük Kalkanı (File Integrity Monitor - FIM):** Windows `hosts` dosyasını (`C:\Windows\System32\drivers\etc\hosts`) ve DNS yapılandırmasını izler. Phishing veya güvenlik sitelerini saptıran zararlı yönlendirmeleri tespit eder; tek tıkla orijinal temiz Microsoft hosts şablonunu geri yükleme desteği sunar.
 
 ---
 

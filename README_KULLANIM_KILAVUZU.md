@@ -98,12 +98,21 @@ Altar; yapay zeka iletişimi, profesyonel Python IDE geliştirme ortamı, 5-katm
 
 ---
 
-### 9. 5-Katmanlı Gelişmiş Antivirüs & EDR Kalkanı
-1. Statik SHA-256 Tehdit İmza Taraması.
-2. Shannon Entropi Radarı (Fidye yazılımı tespiti).
-3. AST & Script Kod Analizörü.
-4. Fidye Tuzağı (Honeypot / Canary Koruması).
-5. İndirilenler & Otomatik Karantina Kalkanı.
+### 9. 5-Katmanlı Gelişmiş Antivirüs & EDR Kalkanı (Next-Gen Savunma Cephaneliği)
+* **5-Katmanlı EDR Çekirdeği:**
+  1. Statik SHA-256 Tehdit İmza Taraması ve Bütünlük Doğrulaması.
+  2. Shannon Entropi Radarı (Şifreli fidye yazılımı tespiti).
+  3. Davranışsal LOLBins & Script Kod Analizörü (Gizli PowerShell/CMD avcısı).
+  4. Fidye Tuzağı (Honeypot / Canary Koruması - Dizin şifreleme algılandığında süreci askıya alır).
+  5. İndirilenler & Otomatik Karantina Kalkanı (AES-GCM `.altar_karantina`).
+
+* **6 İleri Düzey Güvenlik Aracı (`altar_gelismis_guvenlik.py`):**
+  1. 🧠 **AI Sıfır-Gün Tehdit Açıklayıcısı:** Şüpheli dosyaları çalıştırmadan PE başlığı, Shannon entropi, 15+ kritik Windows API'si ve şüpheli kalıplarla analiz eder; 0-100 risk puanı ve Altar AI Türkçe analiz raporu sunar.
+  2. 🌲 **Canlı Süreç Ağacı Radarı:** Çalışan süreçlerin üst-alt (parent-child) ilişkisini inceler, gizli parametreli LOLBin süreçlerini tespit eder; askıya alma (Suspend) ve güvenli sonlandırma (Kill) imkanı sağlar.
+  3. 🛡️ **Autoruns & Başlangıç Kalkanı:** Kayıt Defteri (`HKCU/HKLM Run`, `RunOnce`) ve Startup klasörlerindeki gizli kalıcılık mekanizmalarını derinlemesine tarar.
+  4. 🔌 **USB Aşı & Flaş Bellek Koruyucusu:** Takılan USB bellekleri algılar, kısayol virüslerini (`.lnk`) listeler ve tek tıkla aşı uygulayarak (`autorun.inf` koruma klasörü) bulaşmaları önler.
+  5. 🌐 **C2 Sızıntı & Dış Port Avcısı:** Aktif dış bağlantıları bilinen truva atı / C2 portlarıyla (4444, 1337, 31337 vb.) karşılaştırır ve şüpheli soketleri listeler.
+  6. 🔒 **Bütünlük Kalkanı (Hosts & FIM):** Windows `hosts` dosyasını ve DNS yönlendirmelerini denetler; saptırmaları tespit eder ve tek tıkla temiz Microsoft hosts şablonuna döndürür.
 
 ---
 

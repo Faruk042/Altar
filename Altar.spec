@@ -91,6 +91,7 @@ hiddenimports = [
     "altar_sekmeler_gezgini",
     "altar_animasyon_motoru",
     "altar_edr_kalkan",
+    "altar_gelismis_guvenlik",
     "altar_karantina",
     "altar_oturum_yoneticisi",
     "altar_komut_paleti",

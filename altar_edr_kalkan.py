@@ -22,6 +22,22 @@ except ImportError:
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
+try:
+    from altar_gelismis_guvenlik import (
+        AITehditAciklayiciModal,
+        SurecAgaciModal,
+        AutorunSentinelModal,
+        USBAsisiModal,
+        C2AvcisiModal,
+        ButunlukKalkaniFIMModal,
+        statik_dosya_analiz_et,
+        hosts_butunluk_denetle
+    )
+    GELISMIS_GUVENLIK_AVAILABLE = True
+except ImportError:
+    GELISMIS_GUVENLIK_AVAILABLE = False
+
+
 _NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
 _ANA_DIZIN = os.path.dirname(os.path.abspath(__file__))
 _MEVCUT_PID = os.getpid()
@@ -598,6 +614,51 @@ class AltarEDRAntivirusSekmesi(ctk.CTkFrame):
             fg_color="#008080", command=self.raporu_ai_gonder
         ).pack(side="right", padx=8, pady=6)
 
+        # 2.5 İLERİ DÜZEY GÜVENLİK VE ANTİVİRÜS CEPHANELİĞİ ARAÇ ÇUBUĞU
+        araclar_bar = ctk.CTkFrame(self, fg_color="#0F172A", corner_radius=8, border_width=1, border_color="#1E293B")
+        araclar_bar.pack(side="top", fill="x", padx=6, pady=(0, 6))
+
+        ctk.CTkLabel(
+            araclar_bar, text="🛡️ CEPHANELİK:",
+            font=ctk.CTkFont(family="Consolas", size=11, weight="bold"), text_color="#00FFCC"
+        ).pack(side="left", padx=(8, 4), pady=5)
+
+        ctk.CTkButton(
+            araclar_bar, text="🧠 AI Tehdit Açıklayıcı", width=145, height=26,
+            fg_color="#3B82F6", hover_color="#2563EB", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_ai_tehdit_aciklayici
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar, text="🌲 Süreç Ağacı Radarı", width=140, height=26,
+            fg_color="#10B981", hover_color="#059669", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_surec_agaci
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar, text="🔑 Autoruns Kalkanı", width=135, height=26,
+            fg_color="#F59E0B", hover_color="#D97706", text_color="#000000", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_autorun_sentinel
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar, text="🔌 USB Flaş Koruyucu", width=140, height=26,
+            fg_color="#06B6D4", hover_color="#0891B2", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_usb_asisi
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar, text="🌐 C2 Sızıntı Avcısı", width=135, height=26,
+            fg_color="#EF4444", hover_color="#DC2626", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_c2_avcisi
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar, text="🔒 Bütünlük (Hosts FIM)", width=155, height=26,
+            fg_color="#8B5CF6", hover_color="#7C3AED", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_butunluk_fim
+        ).pack(side="left", padx=3, pady=5)
+
         # 3. ANA BÖLÜNMÜŞ GÖVDE (SOL: CANLI EDR MONITOR | SAĞ: SEZGİSEL TARAYICI & KARANTİNA)
         govde = ctk.CTkFrame(self, fg_color="transparent")
         govde.pack(side="top", fill="both", expand=True, padx=6, pady=(0, 6))
@@ -853,6 +914,47 @@ class AltarEDRAntivirusSekmesi(ctk.CTkFrame):
             messagebox.showinfo("Uygulama Duvarı", f"Uygulamanın dış ağ erişimi Windows Güvenlik Duvarı'nda engellendi:\nKural: {msg}", parent=self)
         else:
             messagebox.showerror("Hata", f"Engelleme başarısız (Yönetici izni gerekebilir):\n{msg}", parent=self)
+
+
+    # =========================================================================
+    # 6 İLERİ DÜZEY GÜVENLİK VE ANTİVİRÜS ARACI TETİKLEYİCİLERİ
+    # =========================================================================
+    def _ac_ai_tehdit_aciklayici(self):
+        hedef = self.entry_karantina_hedef.get().strip().strip('"')
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            AITehditAciklayiciModal(self, dosya_yolu=hedef, ai_callback=self.ai_analiz_callback)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_surec_agaci(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            SurecAgaciModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_autorun_sentinel(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            AutorunSentinelModal(self)
+        else:
+            self.autoruns_raporu_goster()
+
+    def _ac_usb_asisi(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            USBAsisiModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_c2_avcisi(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            C2AvcisiModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_butunluk_fim(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            ButunlukKalkaniFIMModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
 
     def raporu_ai_gonder(self):
         edr_metin = self.txt_edr_log.get("1.0", "end").strip()

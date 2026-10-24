@@ -525,7 +525,15 @@ Altar EDR, sisteminizde sessizce çalışan ve sıfır-gün tehditlerine karşı
   4. Fidye Tuzağı (Honeypot / Canary Dosya Koruması - Dizin manipülasyonunu anında kilitler).
   5. İndirilenler & Otomatik Karantina Kalkanı.
 
-📌 2. PERFORMANS ETKİSİ:
+📌 2. 6 İLERİ DÜZEY GÜVENLİK VE ANTİVİRÜS CEPHANELİĞİ (altar_gelismis_guvenlik.py):
+  1. 🧠 AI Tehdit Açıklayıcısı  : Dosyayı çalıştırmadan PE başlığı, entropi ve 15+ API ile analiz eder; AI Türkçe rapor üretir.
+  2. 🌲 Süreç Ağacı Radarı      : Ebeveyn-çocuk ilişkisini listeler, gizli LOLBin süreçlerini yakalar, dondurma/sonlandırma sunar.
+  3. 🔑 Autoruns Kalkanı        : Windows Registry ve Startup başlangıç kalıcılık mekanizmalarını derinlemesine tarar.
+  4. 🔌 USB Flaş Koruyucu       : Flaş bellekleri algılar, kısayol virüslerini listeler ve tek tıkla autorun aşısı uygular.
+  5. 🌐 C2 Sızıntı Avcısı       : Dış ağ bağlantılarını bilinen C2 portları (4444, 1337 vb.) ile eşleştirir.
+  6. 🔒 Bütünlük Kalkanı (FIM)  : Windows hosts dosyasını izler, zararlı DNS yönlendirmelerini engeller ve orijinal şablonu geri yükler.
+
+📌 3. PERFORMANS ETKİSİ:
   • Cihazınızı yormayan diferansiyel tarama mantığıyla çalışır.
   • RAM tüketimi minimaldir (<45 MB); oyun veya ağır mühendislik yazılımlarını yavaşlatmaz.
 """
