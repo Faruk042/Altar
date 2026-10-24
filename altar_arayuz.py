@@ -27,6 +27,9 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox, filedialog
 import customtkinter as ctk
+import webbrowser
+import requests
+import urllib3
 
 # =========================================================
 # ARAYÜZ REGEX DESENLERİ VE DONANIM KONTROLLERİ
@@ -376,6 +379,1366 @@ class SafeGPUReader:
             except Exception:
                 pass
         return 0
+
+
+
+# =========================================================
+# MODEL ÇALIŞMA MODU SEÇİM PENCERESİ (STANDART vs SANSÜRSÜZ)
+# =========================================================
+class AltarModelModuModal(ctk.CTkToplevel):
+    """
+    Kullanıcı Sohbet / Yazılım kategorisi seçerken veya sorgu göndermeden önce
+    Standart (Sansürlü / Yüksek Kalite) ile Sansürsüz (Filtresiz / Uncensored) modlar
+    arasında seçim yapmasını sağlayan modern ve bilgilendirici modal diyalog.
+    """
+    def __init__(self, parent, on_confirmed=None, profil: str = None):
+        super().__init__(parent)
+        self.parent = parent
+        self.on_confirmed = on_confirmed
+        self.secilen_profil = profil or (parent.active_lang_var.get() if hasattr(parent, "active_lang_var") else "Sohbet")
+
+        self.title("⚡ Altar Yapay Zeka - Çalışma Modu Seçimi")
+        self.geometry("700x530")
+        self.minsize(650, 500)
+        self.resizable(False, False)
+        self.configure(fg_color="#0F172A")
+
+        # Modal davranışları
+        self.transient(parent)
+        self.grab_set()
+        self.protocol("WM_DELETE_WINDOW", self._kapat)
+
+        # Pencereyi ekran veya parent ortasına yerleştir
+        try:
+            self.update_idletasks()
+            pw = parent.winfo_width()
+            ph = parent.winfo_height()
+            px = parent.winfo_rootx()
+            py = parent.winfo_rooty()
+            if pw > 100 and ph > 100:
+                cx = px + (pw - 700) // 2
+                cy = py + (ph - 530) // 2
+                self.geometry(f"700x530+{max(50, cx)}+{max(50, cy)}")
+        except Exception:
+            pass
+
+        self._bilesenleri_olustur()
+        self.lift()
+        self.focus_force()
+
+    def _bilesenleri_olustur(self):
+        # 1. Başlık & Kategori Bilgilendirme
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill="x", padx=24, pady=(16, 10))
+
+        title_lbl = ctk.CTkLabel(
+            header_frame,
+            text="🤖 YAPAY ZEKA ÇALIŞMA MODU SEÇİMİ",
+            font=ctk.CTkFont(size=17, weight="bold"),
+            text_color="#38BDF8"
+        )
+        title_lbl.pack(anchor="w")
+
+        sub_text = (
+            f"Aktif Kategori: [{self.secilen_profil}] — Lütfen bu oturumda kullanmak istediğiniz "
+            "model çalışma prensibini belirleyin:"
+        )
+        sub_lbl = ctk.CTkLabel(
+            header_frame,
+            text=sub_text,
+            font=ctk.CTkFont(size=12),
+            text_color="#94A3B8"
+        )
+        sub_lbl.pack(anchor="w", pady=(2, 0))
+
+        # 2. İki Kartlık Seçim Alanı (Standart vs Sansürsüz)
+        cards_frame = ctk.CTkFrame(self, fg_color="transparent")
+        cards_frame.pack(fill="both", expand=True, padx=20, pady=5)
+        cards_frame.columnconfigure(0, weight=1, uniform="card")
+        cards_frame.columnconfigure(1, weight=1, uniform="card")
+
+        # --- KART 1: STANDART (SANSÜRLÜ / YÜKSEK KALİTE) ---
+        card_std = ctk.CTkFrame(
+            cards_frame,
+            fg_color="#1E293B",
+            corner_radius=12,
+            border_width=2,
+            border_color="#10B981"
+        )
+        card_std.grid(row=0, column=0, sticky="nsew", padx=8, pady=4)
+
+        std_header = ctk.CTkLabel(
+            card_std,
+            text="🛡️ STANDART MOD",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color="#10B981"
+        )
+        std_header.pack(pady=(14, 2))
+
+        std_badge = ctk.CTkLabel(
+            card_std,
+            text="(Filtreli / Maksimum Kalite)",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#34D399"
+        )
+        std_badge.pack(pady=(0, 8))
+
+        std_detaylar = (
+            "• Sohbet: qwen2.5:7b\n"
+            "• Yazılım: qwen2.5-coder:7b\n"
+            "• Üstün Türkçe dilbilgisi ve akıl yürütme\n"
+            "• Tarih, bilim ve matematikte sıfır halüsinasyon\n"
+            "• Orijinal güvenlik ve doğruluk filtreleri devrede"
+        )
+        std_txt = ctk.CTkLabel(
+            card_std,
+            text=std_detaylar,
+            font=ctk.CTkFont(size=11),
+            text_color="#CBD5E1",
+            justify="left"
+        )
+        std_txt.pack(padx=14, pady=6, anchor="w")
+
+        btn_std = ctk.CTkButton(
+            card_std,
+            text="🛡️ Standart Modu Seç",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#059669",
+            hover_color="#047857",
+            height=36,
+            command=lambda: self._mod_secildi("sansurlu")
+        )
+        btn_std.pack(side="bottom", fill="x", padx=16, pady=14)
+
+        # --- KART 2: SANSÜRSÜZ (FİLTRESİZ / SIFIR RET) ---
+        card_unc = ctk.CTkFrame(
+            cards_frame,
+            fg_color="#1E293B",
+            corner_radius=12,
+            border_width=2,
+            border_color="#F59E0B"
+        )
+        card_unc.grid(row=0, column=1, sticky="nsew", padx=8, pady=4)
+
+        unc_header = ctk.CTkLabel(
+            card_unc,
+            text="⚡ SANSÜRSÜZ MOD",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color="#F59E0B"
+        )
+        unc_header.pack(pady=(14, 2))
+
+        unc_badge = ctk.CTkLabel(
+            card_unc,
+            text="(Uncensored / Filtresiz Erişim)",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#FBBF24"
+        )
+        unc_badge.pack(pady=(0, 8))
+
+        unc_detaylar = (
+            "• Sohbet: qwen2.5-abliterate:7b\n"
+            "• Yazılım: qwen2.5-coder-uncensored\n"
+            "• Güvenlik filtreleri ve ret katmanları devre dışıdır\n"
+            "• Her türlü doğrudan soruya eksiksiz yanıt üretir\n"
+            "• Gelişmiş kodlama ve tersine mühendislik desteği"
+        )
+        unc_txt = ctk.CTkLabel(
+            card_unc,
+            text=unc_detaylar,
+            font=ctk.CTkFont(size=11),
+            text_color="#CBD5E1",
+            justify="left"
+        )
+        unc_txt.pack(padx=14, pady=6, anchor="w")
+
+        btn_unc = ctk.CTkButton(
+            card_unc,
+            text="⚡ Sansürsüz Modu Seç",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#D97706",
+            hover_color="#B45309",
+            height=36,
+            command=self._sansursuz_tiklandi
+        )
+        btn_unc.pack(side="bottom", fill="x", padx=16, pady=14)
+
+        # 3. UYARI VE BİLGİLENDİRME KUTUSU (Kullanıcının talep ettiği özel açıklama)
+        warn_frame = ctk.CTkFrame(
+            self,
+            fg_color="#241405",
+            border_width=1,
+            border_color="#B45309",
+            corner_radius=8
+        )
+        warn_frame.pack(fill="x", padx=20, pady=(8, 10))
+
+        warn_title = ctk.CTkLabel(
+            warn_frame,
+            text="⚠️ UYARI VE KALİTE BİLGİLENDİRMESİ:",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#F59E0B"
+        )
+        warn_title.pack(anchor="w", padx=12, pady=(6, 2))
+
+        warn_text = (
+            "Sansürsüz modellerde yerleşik güvenlik ve ret filtreleri nöral ağırlıklardan arındırıldığı "
+            "(abliterated/uncensored) için model soruları reddetmez ve taleplere doğrudan yanıt verir. "
+            "Ancak filtrelerin kaldırılması nedeniyle karmaşık mantık adımlarında, tarihsel veya bilimsel "
+            "olgularda cevap kalitesinde kısmi bir düşüş ya da halüsinasyon riski görülebilir. "
+            "Maksimum doğruluk ve kusursuz yanıtlar için Standart Mod önerilir."
+        )
+        warn_desc = ctk.CTkLabel(
+            warn_frame,
+            text=warn_text,
+            font=ctk.CTkFont(size=10),
+            text_color="#FDE68A",
+            justify="left",
+            wraplength=640
+        )
+        warn_desc.pack(anchor="w", padx=12, pady=(0, 6))
+
+        # 4. Alt Hatırlatma ve Oturum Onayı
+        bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
+        bottom_frame.pack(fill="x", padx=24, pady=(0, 12))
+
+        self.var_hatirla = ctk.BooleanVar(value=True)
+        chk_hatirla = ctk.CTkCheckBox(
+            bottom_frame,
+            text="Seçimimi bu oturum için hatırla (Üst menüdeki mod butonundan istediğiniz zaman değiştirebilirsiniz)",
+            variable=self.var_hatirla,
+            font=ctk.CTkFont(size=11),
+            text_color="#94A3B8"
+        )
+        chk_hatirla.pack(side="left")
+
+    def _sansursuz_tiklandi(self):
+        """Kullanıcı Yazılım profilinde ise Hız mı Kalite mi sorusunu yöneltir, aksi halde direkt sansürsüzü seçer."""
+        if self.secilen_profil == "Yazılım":
+            self._yazilim_hiz_kalite_ekrani_goster()
+        else:
+            self._mod_secildi("sansursuz")
+
+    def _yazilim_hiz_kalite_ekrani_goster(self):
+        """Yazılım kategorisi için Hız (Q4_0) ve Kalite (Q8_0) kuantizasyon seçim ekranını sunar."""
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        # 1. Başlık & Bilgilendirme
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill="x", padx=24, pady=(16, 10))
+
+        title_lbl = ctk.CTkLabel(
+            header_frame,
+            text="⚡ YAZILIM SANSÜRSÜZ ÇALIŞMA TERCİHİ",
+            font=ctk.CTkFont(size=17, weight="bold"),
+            text_color="#F59E0B"
+        )
+        title_lbl.pack(anchor="w")
+
+        sub_lbl = ctk.CTkLabel(
+            header_frame,
+            text="Hız mı yoksa Kalite mi? Lütfen donanım performansınıza uygun çalışma modunu seçin:",
+            font=ctk.CTkFont(size=12),
+            text_color="#94A3B8"
+        )
+        sub_lbl.pack(anchor="w", pady=(2, 0))
+
+        # 2. İki Kartlık Seçim Alanı (Hız vs Kalite)
+        cards_frame = ctk.CTkFrame(self, fg_color="transparent")
+        cards_frame.pack(fill="both", expand=True, padx=20, pady=5)
+        cards_frame.columnconfigure(0, weight=1, uniform="card")
+        cards_frame.columnconfigure(1, weight=1, uniform="card")
+
+        # --- KART 1: HIZ ODAKLI (Q4_0) ---
+        card_speed = ctk.CTkFrame(
+            cards_frame,
+            fg_color="#1E293B",
+            corner_radius=12,
+            border_width=2,
+            border_color="#38BDF8"
+        )
+        card_speed.grid(row=0, column=0, sticky="nsew", padx=8, pady=4)
+
+        spd_header = ctk.CTkLabel(
+            card_speed,
+            text="⚡ HIZ ODAKLI",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color="#38BDF8"
+        )
+        spd_header.pack(pady=(14, 2))
+
+        spd_badge = ctk.CTkLabel(
+            card_speed,
+            text="(Q4_0 Kuantizasyon - 6.3 GB)",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#7DD3FC"
+        )
+        spd_badge.pack(pady=(0, 8))
+
+        spd_detaylar = (
+            "• Model: Qwen2.5-Coder-7B Uncensored:Q4_0\n"
+            "• Düşük VRAM ve RAM bellek tüketimi\n"
+            "• Belirgin şekilde daha yüksek token üretim hızı\n"
+            "• Seri kod blokları ve anlık fonksiyon üretimi\n"
+            "• Hızlı prototipleme ve betikler için ideal"
+        )
+        spd_txt = ctk.CTkLabel(
+            card_speed,
+            text=spd_detaylar,
+            font=ctk.CTkFont(size=11),
+            text_color="#CBD5E1",
+            justify="left"
+        )
+        spd_txt.pack(padx=14, pady=6, anchor="w")
+
+        btn_speed = ctk.CTkButton(
+            card_speed,
+            text="⚡ Hız Modunu Seç (Q4_0)",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#0284C7",
+            hover_color="#0369A1",
+            height=36,
+            command=lambda: self._yazilim_kuant_secildi("q4_0")
+        )
+        btn_speed.pack(side="bottom", fill="x", padx=16, pady=14)
+
+        # --- KART 2: KALİTE ODAKLI (Q8_0) ---
+        card_qual = ctk.CTkFrame(
+            cards_frame,
+            fg_color="#1E293B",
+            corner_radius=12,
+            border_width=2,
+            border_color="#A855F7"
+        )
+        card_qual.grid(row=0, column=1, sticky="nsew", padx=8, pady=4)
+
+        qual_header = ctk.CTkLabel(
+            card_qual,
+            text="🎯 KALİTE ODAKLI",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color="#A855F7"
+        )
+        qual_header.pack(pady=(14, 2))
+
+        qual_badge = ctk.CTkLabel(
+            card_qual,
+            text="(Q8_0 Kuantizasyon - 8.1 GB)",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#C084FC"
+        )
+        qual_badge.pack(pady=(0, 8))
+
+        qual_detaylar = (
+            "• Model: Qwen2.5-Coder-7B Uncensored:Q8_0\n"
+            "• Tam 8-bit ağırlık hassasiyeti ve derin akıl yürütme\n"
+            "• Üst düzey sözdizimi, algoritma ve mantık doğruluğu\n"
+            "• Karmaşık mimariler, tersine mühendislik ve analiz\n"
+            "• En hassas ve eksiksiz kodlama için ideal"
+        )
+        qual_txt = ctk.CTkLabel(
+            card_qual,
+            text=qual_detaylar,
+            font=ctk.CTkFont(size=11),
+            text_color="#CBD5E1",
+            justify="left"
+        )
+        qual_txt.pack(padx=14, pady=6, anchor="w")
+
+        btn_qual = ctk.CTkButton(
+            card_qual,
+            text="🎯 Kalite Modunu Seç (Q8_0)",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#7C3AED",
+            hover_color="#6D28D9",
+            height=36,
+            command=lambda: self._yazilim_kuant_secildi("q8_0")
+        )
+        btn_qual.pack(side="bottom", fill="x", padx=16, pady=14)
+
+        # 3. Açıklama Alanı
+        info_frame = ctk.CTkFrame(
+            self,
+            fg_color="#18181B",
+            border_width=1,
+            border_color="#3F3F46",
+            corner_radius=8
+        )
+        info_frame.pack(fill="x", padx=20, pady=(8, 10))
+
+        info_lbl = ctk.CTkLabel(
+            info_frame,
+            text="💡 Karşılaştırma: Hız seçeneği (Q4_0) sistem kaynaklarını daha az tüketerek yanıt süresini kısaltır. Kalite seçeneği (Q8_0) ise ağırlık kaybını sıfıra indirerek maksimum doğruluk sağlar.",
+            font=ctk.CTkFont(size=10),
+            text_color="#E4E4E7",
+            justify="left",
+            wraplength=640
+        )
+        info_lbl.pack(anchor="w", padx=12, pady=8)
+
+        # 4. Alt Butonlar
+        bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
+        bottom_frame.pack(fill="x", padx=24, pady=(0, 12))
+
+        btn_geri = ctk.CTkButton(
+            bottom_frame,
+            text="← Geri Dön (Mod Seçimi)",
+            font=ctk.CTkFont(size=11),
+            fg_color="#334155",
+            hover_color="#475569",
+            width=160,
+            height=28,
+            command=self._ana_secim_ekranina_don
+        )
+        btn_geri.pack(side="left")
+
+        chk_hatirla = ctk.CTkCheckBox(
+            bottom_frame,
+            text="Seçimimi bu oturum için hatırla",
+            variable=self.var_hatirla,
+            font=ctk.CTkFont(size=11),
+            text_color="#94A3B8"
+        )
+        chk_hatirla.pack(side="right")
+
+    def _yazilim_kuant_secildi(self, kuant: str):
+        if hasattr(self.parent, "yazilim_sansursuz_kuant"):
+            self.parent.yazilim_sansursuz_kuant = kuant
+        self._mod_secildi("sansursuz")
+
+    def _ana_secim_ekranina_don(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+        self._bilesenleri_olustur()
+
+    def _mod_secildi(self, mod_kodu: str):
+        try:
+            if hasattr(self.parent, "_model_modu_guncelle"):
+                self.parent._model_modu_guncelle(mod_kodu)
+            else:
+                self.parent.aktif_model_modu = mod_kodu
+            if self.var_hatirla.get():
+                self.parent._model_modu_soruldu = True
+            else:
+                self.parent._model_modu_soruldu = False
+        except Exception:
+            pass
+
+        self._kapat()
+
+        if self.on_confirmed and callable(self.on_confirmed):
+            try:
+                self.parent.after(50, self.on_confirmed)
+            except Exception:
+                self.on_confirmed()
+
+    def _kapat(self):
+        try:
+            self.parent._modal_acik_mi = False
+            self.parent._model_modu_soruldu = True
+        except Exception:
+            pass
+        try:
+            self.destroy()
+        except Exception:
+            pass
+
+
+# =========================================================
+# OPENROUTER APİ VE MODEL SEÇİM MODALLERİ
+# =========================================================
+class AltarApiKeyWindow(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.title("🔑 OpenRouter API Anahtarı Yapılandırma")
+        self.geometry("600x460")
+        self.minsize(560, 420)
+        self.resizable(False, False)
+        self.configure(fg_color="#0F172A")
+        self.transient(parent)
+        self.grab_set()
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
+
+        # Ortalama
+        try:
+            self.update_idletasks()
+            pw = parent.winfo_width()
+            ph = parent.winfo_height()
+            px = parent.winfo_rootx()
+            py = parent.winfo_rooty()
+            if pw > 100 and ph > 100:
+                cx = px + (pw - 600) // 2
+                cy = py + (ph - 460) // 2
+                self.geometry(f"600x460+{max(50, cx)}+{max(50, cy)}")
+        except Exception:
+            pass
+
+        self._bilesenleri_olustur()
+        self.lift()
+        self.focus_force()
+
+    def _bilesenleri_olustur(self):
+        main_frame = ctk.CTkFrame(self, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, padx=24, pady=20)
+
+        # Başlık
+        title_lbl = ctk.CTkLabel(
+            main_frame,
+            text="🔑 OPENROUTER API ANAHTARI YAPILANDIRMA",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#38BDF8"
+        )
+        title_lbl.pack(anchor="w")
+
+        desc_lbl = ctk.CTkLabel(
+            main_frame,
+            text="OpenRouter üzerindeki 470+ modele tek bir anahtar ile erişin.",
+            font=ctk.CTkFont(size=12),
+            text_color="#94A3B8"
+        )
+        desc_lbl.pack(anchor="w", pady=(2, 12))
+
+        # Bilgilendirme Kartı
+        info_card = ctk.CTkFrame(main_frame, fg_color="#1E293B", corner_radius=8, border_width=1, border_color="#334155")
+        info_card.pack(fill="x", pady=(0, 14))
+
+        info_text = (
+            "💡 Bilgi: OpenRouter hesabınızdan alacağınız API anahtarı ile hem ücretsiz (0.00$) hem de "
+            "ücretli modellere anında erişebilirsiniz.\n\n"
+            "🎁 Ücretsiz Modeller (Gemma 4, Nemotron, Free Router vb.) hesabınızda bakiye olmasa dahi "
+            "0.00$ ile sınırsızca çalışır. Sadece hesabınızı doğrulayan geçerli bir API anahtarı yeterlidir."
+        )
+        ctk.CTkLabel(
+            info_card,
+            text=info_text,
+            font=ctk.CTkFont(size=11),
+            text_color="#CBD5E1",
+            justify="left",
+            wraplength=520
+        ).pack(padx=14, pady=12, anchor="w")
+
+        # Tarayıcıda Anahtar Alma Butonu
+        btn_open_browser = ctk.CTkButton(
+            main_frame,
+            text="🌐 OpenRouter Anahtarlar Sayfasını Aç (openrouter.ai/keys)",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#3B82F6",
+            hover_color="#2563EB",
+            height=34,
+            command=self._tarayici_ac
+        )
+        btn_open_browser.pack(fill="x", pady=(0, 14))
+
+        # Anahtar Giriş Alanı
+        lbl_key = ctk.CTkLabel(
+            main_frame,
+            text="OpenRouter API Anahtarınız (sk-or-v1-...):",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#F1F5F9"
+        )
+        lbl_key.pack(anchor="w", pady=(0, 4))
+
+        entry_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        entry_frame.pack(fill="x", pady=(0, 16))
+
+        mevcut_key = os.getenv("OPENROUTER_API_KEY", "")
+        if not mevcut_key and hasattr(self.parent, "api_engine") and getattr(self.parent.api_engine, "api_key", ""):
+            mevcut_key = self.parent.api_engine.api_key
+        if not mevcut_key:
+            for _p in [
+                r"e:\Gemini API\Dosyalama_Projesi_Guncel\.env",
+                r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\.env",
+                r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\_internal\.env",
+                r"e:\Yazılım\Python\Altar Projesi\Dosyalama Projesi_Guncel\.env",
+                os.path.join(os.path.dirname(sys.executable), ".env"),
+                os.path.join(os.path.dirname(sys.executable), "_internal", ".env"),
+                os.path.join(os.getcwd(), ".env")
+            ]:
+                if os.path.isfile(_p):
+                    try:
+                        with open(_p, "r", encoding="utf-8") as _f:
+                            for _l in _f:
+                                if _l.strip().startswith("OPENROUTER_API_KEY="):
+                                    _k = _l.split("=", 1)[1].strip().strip('"').strip("'")
+                                    if _k.startswith("sk-or-"):
+                                        mevcut_key = _k
+                                        break
+                    except Exception:
+                        pass
+                if mevcut_key:
+                    break
+
+        self.key_var = ctk.StringVar(value=mevcut_key)
+        self.entry_key = ctk.CTkEntry(
+            entry_frame,
+            textvariable=self.key_var,
+            placeholder_text="sk-or-v1-...",
+            font=ctk.CTkFont(family="Consolas", size=12),
+            show="*",
+            height=34
+        )
+        self.entry_key.pack(side="left", fill="x", expand=True, padx=(0, 6))
+
+        self.sifre_gizli = True
+        self.btn_eye = ctk.CTkButton(
+            entry_frame,
+            text="👁️",
+            width=38,
+            height=34,
+            font=ctk.CTkFont(size=13),
+            fg_color="#334155",
+            hover_color="#475569",
+            command=self._sifre_gizle_goster
+        )
+        self.btn_eye.pack(side="right")
+
+        # Durum Bilgi Etiketi
+        self.lbl_durum = ctk.CTkLabel(
+            main_frame,
+            text="" if mevcut_key else "⚠️ Henüz OpenRouter API anahtarı tanımlanmamış.",
+            font=ctk.CTkFont(size=11),
+            text_color="#10B981" if mevcut_key else "#F59E0B"
+        )
+        self.lbl_durum.pack(anchor="w", pady=(0, 14))
+
+        # Alt Butonlar
+        btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        btn_frame.pack(fill="x", side="bottom")
+
+        self.btn_kaydet = ctk.CTkButton(
+            btn_frame,
+            text="💾 Kaydet & Doğrula",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#059669",
+            hover_color="#047857",
+            height=36,
+            command=self._kaydet_ve_dogrula
+        )
+        self.btn_kaydet.pack(side="left", fill="x", expand=True, padx=(0, 8))
+
+        btn_iptal = ctk.CTkButton(
+            btn_frame,
+            text="Kapat",
+            font=ctk.CTkFont(size=12),
+            fg_color="#334155",
+            hover_color="#475569",
+            width=100,
+            height=36,
+            command=self.destroy
+        )
+        btn_iptal.pack(side="right")
+
+    def _sifre_gizle_goster(self):
+        if self.sifre_gizli:
+            self.entry_key.configure(show="")
+            self.sifre_gizli = False
+            self.btn_eye.configure(text="🔒")
+        else:
+            self.entry_key.configure(show="*")
+            self.sifre_gizli = True
+            self.btn_eye.configure(text="👁️")
+
+    def _tarayici_ac(self):
+        try:
+            webbrowser.open("https://openrouter.ai/keys")
+        except Exception as e:
+            messagebox.showerror("Hata", f"Tarayıcı açılamadı: {e}", parent=self)
+
+    def _anahtari_envye_yaz(self, anahtar: str):
+        hedefler = [
+            r"e:\Gemini API\Dosyalama_Projesi_Guncel\.env",
+            r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\.env",
+            r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\_internal\.env",
+            r"e:\Yazılım\Python\Altar Projesi\Dosyalama Projesi_Guncel\.env",
+            r"e:\Yazılım\Python\Altar Projesi\Dosyalama Projesi_Guncel\dist\Altar\.env",
+            r"e:\Yazılım\Python\Altar Projesi\Dosyalama Projesi_Guncel\dist\Altar\_internal\.env",
+            os.path.join(os.path.dirname(sys.executable), ".env"),
+            os.path.join(os.path.dirname(sys.executable), "_internal", ".env"),
+            os.path.join(os.getcwd(), ".env")
+        ]
+        for dosya in hedefler:
+            try:
+                satirlar = []
+                anahtar_bulundu = False
+                if os.path.exists(dosya):
+                    with open(dosya, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.strip().startswith("OPENROUTER_API_KEY="):
+                                satirlar.append(f'OPENROUTER_API_KEY="{anahtar}"\n')
+                                anahtar_bulundu = True
+                            else:
+                                satirlar.append(line)
+                if not anahtar_bulundu:
+                    satirlar.append(f'\nOPENROUTER_API_KEY="{anahtar}"\n')
+                os.makedirs(os.path.dirname(dosya), exist_ok=True)
+                with open(dosya, "w", encoding="utf-8") as f:
+                    f.writelines(satirlar)
+            except Exception as e:
+                print(f"[!] .env yazma hatası ({dosya}): {e}")
+
+    def _kaydet_ve_dogrula(self):
+        anahtar = self.entry_key.get().strip()
+        if not anahtar:
+            messagebox.showwarning("Eksik Anahtar", "Lütfen bir OpenRouter API anahtarı girin.", parent=self)
+            return
+
+        self.btn_kaydet.configure(text="⏳ Doğrulanıyor...", state="disabled")
+        self.lbl_durum.configure(text="OpenRouter sunucuları ile bağlantı kuruluyor...", text_color="#38BDF8")
+        self.update_idletasks()
+
+        def _arka_plan():
+            durum_mesaji = ""
+            basarili = False
+            try:
+                urllib3.disable_warnings()
+                headers = {"Authorization": f"Bearer {anahtar}"}
+                r = requests.get("https://openrouter.ai/api/v1/auth/key", headers=headers, verify=False, timeout=8)
+                if r.status_code == 200:
+                    data = r.json().get("data", {})
+                    label = data.get("label", "Altar Key")
+                    usage = data.get("usage", 0)
+                    is_free = data.get("is_free_tier", True)
+                    basarili = True
+                    durum_mesaji = (
+                        f"✅ OpenRouter API Anahtarı Başarıyla Doğrulandı!\n\n"
+                        f"🏷️ Anahtar Etiketi: {label}\n"
+                        f"📊 Mevcut Kullanım: ${usage:.4f}\n"
+                        f"🛡️ Bakiye Durumu: {'Ücretsiz Seviye (0.00$)' if is_free else 'Kredili / Standart'}\n\n"
+                        f"Anahtar sisteme kaydedildi ve tüm modeller aktifleştirildi."
+                    )
+                else:
+                    err = r.text
+                    try:
+                        err = r.json().get("error", {}).get("message", err)
+                    except Exception:
+                        pass
+                    durum_mesaji = f"⚠️ OpenRouter Yetkilendirme Hatası ({r.status_code}):\n{err}"
+            except Exception as e:
+                durum_mesaji = f"⚠️ Sunucuya erişilemedi: {e}"
+
+            def _ui_tamamla():
+                if basarili:
+                    self._anahtari_envye_yaz(anahtar)
+                    os.environ["OPENROUTER_API_KEY"] = anahtar
+                    if hasattr(self.parent, "api_engine") and self.parent.api_engine:
+                        self.parent.api_engine.api_key = anahtar
+                        self.parent.api_engine.hazir_mi = True
+                        if hasattr(self.parent, "_api_modellerini_arka_planda_yukle"):
+                            threading.Thread(target=self.parent._api_modellerini_arka_planda_yukle, daemon=True).start()
+                    if hasattr(self.parent, "log_to_chat"):
+                        self.parent.log_to_chat("SİSTEM", "🔑 OpenRouter API Anahtarı başarıyla kaydedildi ve doğrulandı.", final=True)
+                    messagebox.showinfo("Başarılı", durum_mesaji, parent=self)
+                    self.destroy()
+                else:
+                    cevap = messagebox.askyesno(
+                        "Doğrulama Uyarısı",
+                        f"{durum_mesaji}\n\nBu anahtarı yine de kaydetmek istiyor musunuz?",
+                        parent=self
+                    )
+                    if cevap:
+                        self._anahtari_envye_yaz(anahtar)
+                        os.environ["OPENROUTER_API_KEY"] = anahtar
+                        if hasattr(self.parent, "api_engine") and self.parent.api_engine:
+                            self.parent.api_engine.api_key = anahtar
+                            self.parent.api_engine.hazir_mi = True
+                        messagebox.showinfo("Kaydedildi", "API Anahtarı kaydedildi.", parent=self)
+                        self.destroy()
+                    else:
+                        self.btn_kaydet.configure(text="💾 Kaydet & Doğrula", state="normal")
+                        self.lbl_durum.configure(text="Doğrulama başarısız oldu. Lütfen anahtarı kontrol edin.", text_color="#EF4444")
+
+            self.after(0, _ui_tamamla)
+
+        threading.Thread(target=_arka_plan, daemon=True).start()
+
+
+print("AltarApiKeyWindow defined successfully")
+
+class AltarOpenRouterModelSeciciModal(ctk.CTkToplevel):
+    """
+    OpenRouter API Zeka Modelleri Seçim Merkezi.
+    - En iyi ücretsiz ve ücretli modelleri yan yana 'Ücretli - Ücretsiz' başlıkları altında listeler.
+    - Tüm 470+ modele canlı arama ve aşağı/yukarı kaydırma (scroll) ile tam erişim sağlar.
+    - Kullanıcı seçim yaptığında aktif API modelini günceller ve sisteme bağlar.
+    """
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.title("🌐 OpenRouter Zeka Modeli Seçim Merkezi")
+        self.geometry("980x700")
+        self.minsize(880, 580)
+        self.resizable(True, True)
+        self.configure(fg_color="#0B0F19")
+        self.transient(parent)
+        self.grab_set()
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
+
+        # Ortalama
+        try:
+            self.update_idletasks()
+            pw = parent.winfo_width()
+            ph = parent.winfo_height()
+            px = parent.winfo_rootx()
+            py = parent.winfo_rooty()
+            if pw > 100 and ph > 100:
+                cx = px + (pw - 980) // 2
+                cy = py + (ph - 700) // 2
+                self.geometry(f"980x700+{max(50, cx)}+{max(50, cy)}")
+        except Exception:
+            pass
+
+        self.aktif_filtre = "tumu"
+        self.arama_metni = ""
+        self.gosterilen_adet = 30
+        self.tum_modeller = {}
+        self._yukle_modeller()
+
+        self._bilesenleri_olustur()
+        self.lift()
+        self.focus_force()
+
+    def _yukle_modeller(self):
+        if hasattr(self.parent, "api_engine") and self.parent.api_engine:
+            self.tum_modeller = self.parent.api_engine.modelleri_tara()
+        else:
+            # Fallback varsayılanlar
+            self.tum_modeller = {
+                "openrouter/free": {
+                    "name": "🌟 OpenRouter: Free Router (Otomatik En İyi Ücretsiz)",
+                    "ucretsiz_mi": True, "fiyat": "0.00$", "context": "128K",
+                    "aciklama": "O an en hızlı ve en verimli çalışan ücretsiz modele yönlendirir."
+                },
+                "google/gemma-4-31b-it:free": {
+                    "name": "🎁 Google: Gemma 4 31B (Ücretsiz)",
+                    "ucretsiz_mi": True, "fiyat": "0.00$", "context": "128K",
+                    "aciklama": "Google açık amiral gemisi; Türkçe ve genel akıl yürütme."
+                },
+                "anthropic/claude-3.5-sonnet": {
+                    "name": "💎 Anthropic: Claude 3.5 Sonnet",
+                    "ucretsiz_mi": False, "fiyat": "3.00$ / 15.00$ M", "context": "200K",
+                    "aciklama": "Dünyanın en yüksek kodlama ve akıl yürütme başarımına sahip modeli."
+                }
+            }
+
+    def _bilesenleri_olustur(self):
+        # 1. ÜST SABİT BAŞLIK VE KONTROL PANELİ
+        header_frame = ctk.CTkFrame(self, fg_color="#0F172A", corner_radius=0, height=110)
+        header_frame.pack(fill="x", side="top")
+        header_frame.pack_propagate(False)
+
+        top_row = ctk.CTkFrame(header_frame, fg_color="transparent")
+        top_row.pack(fill="x", padx=20, pady=(12, 6))
+
+        # Başlık ve Aktif Model
+        secili_id = self.parent.active_api_model_var.get() if hasattr(self.parent, "active_api_model_var") else "openrouter/free"
+        title_box = ctk.CTkFrame(top_row, fg_color="transparent")
+        title_box.pack(side="left")
+
+        ctk.CTkLabel(
+            title_box,
+            text="🌐 OPENROUTER BULUT MODELLERİ KATALOĞU",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#38BDF8"
+        ).pack(anchor="w")
+
+        self.lbl_aktif = ctk.CTkLabel(
+            title_box,
+            text=f"🟢 Aktif Model: {secili_id}",
+            font=ctk.CTkFont(size=11),
+            text_color="#10B981"
+        )
+        self.lbl_aktif.pack(anchor="w", pady=(1, 0))
+
+        # Sağ üst kontrol butonları
+        btn_box = ctk.CTkFrame(top_row, fg_color="transparent")
+        btn_box.pack(side="right")
+
+        btn_key = ctk.CTkButton(
+            btn_box,
+            text="🔑 API Anahtarı",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            fg_color="#334155",
+            hover_color="#475569",
+            width=110,
+            height=28,
+            command=self._api_anahtari_penceresi_ac
+        )
+        btn_key.pack(side="left", padx=(0, 8))
+
+        btn_refresh = ctk.CTkButton(
+            btn_box,
+            text="🔄 Yenile",
+            font=ctk.CTkFont(size=11),
+            fg_color="#1E293B",
+            hover_color="#334155",
+            width=80,
+            height=28,
+            command=self._modelleri_yenile
+        )
+        btn_refresh.pack(side="left")
+
+        # Arama ve Filtre Satırı
+        filter_row = ctk.CTkFrame(header_frame, fg_color="transparent")
+        filter_row.pack(fill="x", padx=20, pady=(0, 10))
+
+        # Canlı Arama Kutusu
+        self.search_var = ctk.StringVar()
+        self.search_var.trace_add("write", self._arama_degisti)
+        self.search_entry = ctk.CTkEntry(
+            filter_row,
+            textvariable=self.search_var,
+            placeholder_text="🔍 Model ara... (örn: gemma, claude, deepseek, 70b, free)",
+            font=ctk.CTkFont(size=12),
+            height=32,
+            width=360
+        )
+        self.search_entry.pack(side="left", padx=(0, 12))
+
+        # Filtre Butonları (Tümü, Ücretsizler, Ücretliler, Sansürsüz)
+        ucretsiz_sayisi = sum(1 for m in self.tum_modeller.values() if m.get("ucretsiz_mi"))
+        sansursuz_sayisi = sum(
+            1 for mid, m in self.tum_modeller.items()
+            if m.get("sansursuz_mu") or any(k in f"{mid} {m.get('name', '')}".lower() for k in ("sansürsüz", "uncensored", "venice", "cydonia", "hermes", "dolphin", "lfm", "flint"))
+        )
+        ucretli_sayisi = len(self.tum_modeller) - ucretsiz_sayisi
+
+        self.seg_filter = ctk.CTkSegmentedButton(
+            filter_row,
+            values=[
+                f"🌟 Tümü ({len(self.tum_modeller)})",
+                f"🎁 Ücretsizler ({ucretsiz_sayisi})",
+                f"💎 Ücretliler ({ucretli_sayisi})",
+                f"🔓 Sansürsüz ({sansursuz_sayisi})"
+            ],
+            command=self._filtre_degisti,
+            height=32,
+            selected_color="#059669",
+            selected_hover_color="#047857"
+        )
+        self.seg_filter.set(f"🌟 Tümü ({len(self.tum_modeller)})")
+        self.seg_filter.pack(side="left")
+
+        # 2. ANA KAYDIRILABİLİR GÖVDE (Aşağı ve Yukarı Kaydırılabilir)
+        self.scroll_frame = ctk.CTkScrollableFrame(
+            self,
+            fg_color="#0B0F19",
+            corner_radius=8
+        )
+        self.scroll_frame.pack(fill="both", expand=True, padx=16, pady=12)
+
+        # İçeriği Çiz
+        self._arayuzu_ciz()
+
+    def _api_anahtari_penceresi_ac(self):
+        try:
+            AltarApiKeyWindow(self)
+        except Exception as e:
+            messagebox.showerror("Hata", f"Pencere açılamadı: {e}", parent=self)
+
+    def _modelleri_yenile(self):
+        if hasattr(self.parent, "api_engine") and self.parent.api_engine:
+            self.parent.api_engine._taranan_modeller = None
+            self._yukle_modeller()
+            self._arayuzu_ciz()
+
+    def _filtre_degisti(self, val):
+        if "Ücretsiz" in val:
+            self.aktif_filtre = "ucretsiz"
+        elif "Ücretli" in val:
+            self.aktif_filtre = "ucretli"
+        elif "Sansürsüz" in val:
+            self.aktif_filtre = "sansursuz"
+        else:
+            self.aktif_filtre = "tumu"
+        self.gosterilen_adet = 30
+        self._arayuzu_ciz()
+
+    def _arama_degisti(self, *args):
+        self.arama_metni = self.search_var.get().strip().lower()
+        self.gosterilen_adet = 30
+        self._arayuzu_ciz()
+
+    def _arayuzu_ciz(self):
+        # Önceki bileşenleri temizle
+        for child in self.scroll_frame.winfo_children():
+            child.destroy()
+
+        arama = self.arama_metni
+
+        # =========================================================================
+        # BÖLÜM 1: ÖNE ÇIKAN EN İYİ MODELLER (YAN YANA: ÜCRETSİZ - ÜCRETLİ - SANSÜRSÜZ)
+        # =========================================================================
+        if not arama:
+            self._ciz_one_cikanlar_yan_yana()
+
+        # =========================================================================
+        # BÖLÜM 2: TÜM ERİŞİLEBİLİR MODELLER (ARAMA & KAYDIRMA LİSTESİ)
+        # =========================================================================
+        self._ciz_tum_modeller_listesi()
+
+    def _ciz_one_cikanlar_yan_yana(self):
+        """Kullanıcının talimatı doğrultusunda en iyi ücretsiz, ücretli ve sansürsüz modelleri gösterir."""
+        section_box = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+        section_box.pack(fill="x", pady=(0, 16))
+
+        # İki kolonlu grid çerçevesi
+        cards_grid = ctk.CTkFrame(section_box, fg_color="transparent")
+        cards_grid.pack(fill="x")
+        cards_grid.columnconfigure(0, weight=1, uniform="col")
+        cards_grid.columnconfigure(1, weight=1, uniform="col")
+
+        if self.aktif_filtre == "sansursuz":
+            # SOL KOLON: 🎁 ÜCRETSİZ DÜŞÜK FİLTRELİ MODELLER (0.00$)
+            col_free_un = ctk.CTkFrame(cards_grid, fg_color="#111827", corner_radius=10, border_width=1, border_color="#10B981")
+            col_free_un.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=4)
+
+            hdr_free_un = ctk.CTkFrame(col_free_un, fg_color="#059669", corner_radius=6, height=36)
+            hdr_free_un.pack(fill="x", padx=6, pady=6)
+            hdr_free_un.pack_propagate(False)
+            ctk.CTkLabel(
+                hdr_free_un,
+                text="🎁 ÜCRETSİZ DÜŞÜK FİLTRELİ MODELLER (0.00$)",
+                font=ctk.CTkFont(size=11, weight="bold"),
+                text_color="#FFFFFF"
+            ).pack(expand=True)
+
+            one_cikan_free_un = [
+                ("liquid/lfm-2.5-2.6b:free", "🎁🔓 LiquidAI: LFM 2.5 2.6B", "Açık mimarili, güvenlik bariyeri minimum, hızlı sohbet ve analiz.", "0.00$", "32K"),
+                ("recursive/flint-v1.0:free", "🎁🔓 Recursive: Flint", "Kısıtlamasız araştırma odaklı, red bariyeri bulunmayan serbest yanıt yapısı.", "0.00$", "32K"),
+                ("xingchen-agi/xing4.0-29b-a4b:free", "🎁🔓 XingChen: Xing4.0 29B", "29B açık model mimarili serbest akıl yürütme ve çıktı analizi.", "0.00$", "32K")
+            ]
+            for mid, mname, mdesc, mprice, mctx in one_cikan_free_un:
+                self._ciz_kart(col_free_un, mid, mname, mdesc, mprice, mctx, is_free=True, is_uncensored=True)
+
+            # SAĞ KOLON: 🔓 AMİRAL GEMİSİ SANSÜRSÜZ MODELLER (REFUSAL-FREE)
+            col_flag_un = ctk.CTkFrame(cards_grid, fg_color="#111827", corner_radius=10, border_width=1, border_color="#D97706")
+            col_flag_un.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=4)
+
+            hdr_flag_un = ctk.CTkFrame(col_flag_un, fg_color="#B45309", corner_radius=6, height=36)
+            hdr_flag_un.pack(fill="x", padx=6, pady=6)
+            hdr_flag_un.pack_propagate(False)
+            ctk.CTkLabel(
+                hdr_flag_un,
+                text="🔓 AMİRAL GEMİSİ SANSÜRSÜZ MODELLER (FİLTRESİZ)",
+                font=ctk.CTkFont(size=11, weight="bold"),
+                text_color="#FFFFFF"
+            ).pack(expand=True)
+
+            one_cikan_flag_un = [
+                ("cognitivecomputations/dolphin-mistral-24b-venice-edition", "🔓 Venice: Uncensored (Dolphin Mistral)", "Tamamen sansürsüz ve güvenlik kısıtlamasız. Siber güvenlik ve tersine mühendislik lideri.", "$0.20/M", "32K"),
+                ("thedrummer/cydonia-24b-v4.1", "🔓 TheDrummer: Cydonia 24B V4.1", "Filtresiz ve red yanıtı vermeyen model. Kodlama ve teknik analizlerde reddetmez.", "$0.30/M", "32K"),
+                ("nousresearch/hermes-3-llama-3.1-70b", "🔓 Nous: Hermes 3 70B Instruct", "Nous Research tarafından güvenlik kısıtlamaları kaldırılmış 70B açık model.", "$0.70/M", "128K"),
+                ("nousresearch/hermes-4-405b", "🔓 Nous: Hermes 4 405B", "405 Milyar parametreli devasa sansürsüz amiral gemisi akıl yürütme modeli.", "$1.00/M", "128K")
+            ]
+            for mid, mname, mdesc, mprice, mctx in one_cikan_flag_un:
+                self._ciz_kart(col_flag_un, mid, mname, mdesc, mprice, mctx, is_free=False, is_uncensored=True)
+            return
+
+        # SOL KOLON: 🎁 EN İYİ ÜCRETSİZ MODELLER (0.00$)
+        if self.aktif_filtre in ("tumu", "ucretsiz"):
+            col_free = ctk.CTkFrame(cards_grid, fg_color="#111827", corner_radius=10, border_width=1, border_color="#059669")
+            col_free.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=4)
+
+            # Kolon Başlığı
+            hdr_free = ctk.CTkFrame(col_free, fg_color="#059669", corner_radius=6, height=36)
+            hdr_free.pack(fill="x", padx=6, pady=6)
+            hdr_free.pack_propagate(False)
+            ctk.CTkLabel(
+                hdr_free,
+                text="🎁 EN İYİ ÜCRETSİZ MODELLER (0.00$)",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color="#FFFFFF"
+            ).pack(expand=True)
+
+            one_cikan_ucretsiz = [
+                ("openrouter/free", "🌟 OpenRouter: Free Router", "O an en verimli ücretsiz modele otomatik yönlendirir.", "128K", False),
+                ("liquid/lfm-2.5-2.6b:free", "🎁🔓 LiquidAI: LFM 2.5 2.6B (Düşük Filtre)", "Açık mimari, filtre ve güvenlik reddi minimum ücretsiz model.", "32K", True),
+                ("recursive/flint-v1.0:free", "🎁🔓 Recursive: Flint (Serbest)", "Kısıtlamasız araştırma odaklı ücretsiz hafif model.", "32K", True),
+                ("google/gemma-4-31b-it:free", "🎁 Google: Gemma 4 31B", "Google amiral gemisi açık model; Türkçe & mantık lideri.", "128K", False),
+                ("google/gemma-4-26b-a4b-it:free", "🎁 Google: Gemma 4 26B A4B", "MoE mimarili hafif, seri ve zeki ücretsiz model.", "128K", False),
+                ("nvidia/nemotron-3-super-120b-a12b:free", "🎁 NVIDIA: Nemotron 120B Super", "120 Milyar parametreli dev analiz motoru.", "128K", False),
+                ("nvidia/nemotron-3-ultra-550b-a55b:free", "🎁 NVIDIA: Nemotron 550B Ultra", "550 Milyar parametreli devasa derin zeka modeli.", "128K", False),
+                ("nvidia/nemotron-3.5-lightning:free", "🎁 NVIDIA: Nemotron Lightning", "Yıldırım hızında ultra düşük gecikmeli yanıtlar.", "128K", False),
+                ("cohere/north-mini-code:free", "🎁 Cohere: North Mini Code", "Yazılım ve kod tasarımı için optimize edilmiş ücretsiz model.", "64K", False)
+            ]
+
+            for mid, mname, mdesc, mctx, is_unc in one_cikan_ucretsiz:
+                self._ciz_kart(col_free, mid, mname, mdesc, "0.00$", mctx, is_free=True, is_uncensored=is_unc)
+
+        # SAĞ KOLON: 💎 EN İYİ ÜCRETLİ & AMİRAL GEMİSİ MODELLER
+        if self.aktif_filtre in ("tumu", "ucretli"):
+            col_paid = ctk.CTkFrame(cards_grid, fg_color="#111827", corner_radius=10, border_width=1, border_color="#6366F1")
+            col_paid.grid(row=0, column=1 if self.aktif_filtre == "tumu" else 0, sticky="nsew", padx=(8 if self.aktif_filtre == "tumu" else 0, 0), pady=4)
+
+            # Kolon Başlığı
+            hdr_paid = ctk.CTkFrame(col_paid, fg_color="#4F46E5", corner_radius=6, height=36)
+            hdr_paid.pack(fill="x", padx=6, pady=6)
+            hdr_paid.pack_propagate(False)
+            ctk.CTkLabel(
+                hdr_paid,
+                text="💎 EN İYİ ÜCRETLİ & AMİRAL GEMİSİ MODELLER",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color="#FFFFFF"
+            ).pack(expand=True)
+
+            one_cikan_ucretli = [
+                ("cognitivecomputations/dolphin-mistral-24b-venice-edition", "🔓 Venice: Uncensored", "Tamamen sansürsüz ve güvenlik kısıtlamasız Dolphin Mistral.", "$0.20/M", "32K", True),
+                ("anthropic/claude-3.5-sonnet", "💎 Claude 3.5 Sonnet", "Dünyanın en yüksek kodlama ve akıl yürütme başarımına sahip modeli.", "$3.00/$15M", "200K", False),
+                ("openai/gpt-4o", "💎 OpenAI: GPT-4o", "OpenAI amiral gemisi çok modlu akıllı yapay zeka.", "$2.50/$10M", "128K", False),
+                ("openai/gpt-4o-mini", "💎 OpenAI: GPT-4o Mini", "Ultra düşük maliyetle olağanüstü hız ve yüksek mantık doğruluğu.", "$0.15/$0.60M", "128K", False),
+                ("deepseek/deepseek-r1", "💎 DeepSeek: R1 (Reasoning Master)", "Açık ağırlıklı akıl yürütme (CoT) ve matematik dünya lideri.", "$0.55/$2.19M", "64K", False),
+                ("deepseek/deepseek-chat", "💎 DeepSeek: V3 (DeepSeek Chat)", "En popüler, ultra ucuz ve GPT-4 seviyesinde genel sohbet/kodlama.", "$0.14/$0.28M", "64K", False),
+                ("google/gemini-2.0-flash-001", "💎 Google: Gemini 2.0 Flash", "1 Milyon token devasa bağlam penceresi ve yeni nesil multimodal hız.", "$0.10/$0.40M", "1M", False),
+                ("qwen/qwen-2.5-72b-instruct", "💎 Qwen: Qwen 2.5 72B Instruct", "Alibaba'nın dev modeli; matematik, mantık, kod ve Türkçe lideri.", "$0.35/$0.40M", "128K", False),
+                ("meta-llama/llama-3.3-70b-instruct", "💎 Meta: Llama 3.3 70B Instruct", "Meta'nın en güncel ve en yetenekli 70 milyar parametreli açık modeli.", "$0.12/$0.30M", "128K", False)
+            ]
+
+            for mid, mname, mdesc, mprice, mctx, is_unc in one_cikan_ucretli:
+                self._ciz_kart(col_paid, mid, mname, mdesc, mprice, mctx, is_free=False, is_uncensored=is_unc)
+
+    def _ciz_kart(self, parent, mid: str, mname: str, mdesc: str, mprice: str, mctx: str, is_free: bool, is_uncensored: bool = False):
+        card = ctk.CTkFrame(
+            parent,
+            fg_color="#1E293B",
+            corner_radius=6,
+            border_width=1,
+            border_color="#F59E0B" if is_uncensored else ("#059669" if is_free else "#334155")
+        )
+        card.pack(fill="x", padx=8, pady=4)
+
+        info_box = ctk.CTkFrame(card, fg_color="transparent")
+        info_box.pack(side="left", fill="both", expand=True, padx=8, pady=6)
+
+        title_frame = ctk.CTkFrame(info_box, fg_color="transparent")
+        title_frame.pack(fill="x")
+
+        ctk.CTkLabel(
+            title_frame,
+            text=mname,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#F8FAFC",
+            anchor="w"
+        ).pack(side="left")
+
+        if is_uncensored:
+            badge = ctk.CTkLabel(
+                title_frame,
+                text=" 🔓 SANSÜRSÜZ ",
+                font=ctk.CTkFont(size=9, weight="bold"),
+                fg_color="#B45309",
+                text_color="#FEF3C7",
+                corner_radius=4
+            )
+            badge.pack(side="left", padx=6)
+
+        ctk.CTkLabel(
+            info_box,
+            text=f"ID: {mid}  •  Bağlam: {mctx}  •  Fiyat: {mprice}",
+            font=ctk.CTkFont(size=10),
+            text_color="#F59E0B" if is_uncensored else ("#10B981" if is_free else "#A5B4FC"),
+            anchor="w"
+        ).pack(fill="x", pady=(1, 2))
+
+        ctk.CTkLabel(
+            info_box,
+            text=mdesc,
+            font=ctk.CTkFont(size=10),
+            text_color="#94A3B8",
+            anchor="w"
+        ).pack(fill="x")
+
+        # Seç Butonu
+        btn_sec = ctk.CTkButton(
+            card,
+            text="Seç",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            fg_color="#D97706" if is_uncensored else ("#059669" if is_free else "#4F46E5"),
+            hover_color="#B45309" if is_uncensored else ("#047857" if is_free else "#4338CA"),
+            width=64,
+            height=28,
+            command=lambda i=mid, n=mname: self._model_sec(i, n)
+        )
+        btn_sec.pack(side="right", padx=8, pady=6)
+
+    def _ciz_tum_modeller_listesi(self):
+        # Ayırıcı Başlık
+        hdr_box = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+        hdr_box.pack(fill="x", pady=(10, 8))
+
+        arama = self.arama_metni
+        filtre = self.aktif_filtre
+
+        # Filtreleme
+        eslesenler = []
+        for mid, data in self.tum_modeller.items():
+            is_free = data.get("ucretsiz_mi", False)
+            is_uncensored = data.get("sansursuz_mu", False) or any(
+                k in f"{mid} {data.get('name', '')}".lower()
+                for k in ("sansürsüz", "uncensored", "venice", "cydonia", "hermes", "dolphin", "lfm", "flint")
+            )
+            if filtre == "ucretsiz" and not is_free:
+                continue
+            if filtre == "ucretli" and is_free:
+                continue
+            if filtre == "sansursuz" and not is_uncensored:
+                continue
+
+            mname = data.get("name", mid)
+            mdesc = data.get("aciklama", "")
+            if arama:
+                if arama not in mid.lower() and arama not in mname.lower() and arama not in mdesc.lower():
+                    continue
+            eslesenler.append((mid, data))
+
+        lbl_baslik = (
+            f"🔍 Arama Sonuçları: '{arama}' ({len(eslesenler)} Model Bulundu)"
+            if arama else
+            f"📋 TÜM ERİŞİLEBİLİR MODELLER ({len(eslesenler)} Model — Arama & Kaydırma Destekli)"
+        )
+        ctk.CTkLabel(
+            hdr_box,
+            text=lbl_baslik,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color="#F1F5F9"
+        ).pack(anchor="w")
+
+        if not eslesenler:
+            ctk.CTkLabel(
+                self.scroll_frame,
+                text="Aradığınız kriterlere uygun model bulunamadı.",
+                font=ctk.CTkFont(size=12),
+                text_color="#94A3B8"
+            ).pack(pady=20)
+            return
+
+        # Listenin ilk N tanesini render et
+        gosterilecek = eslesenler[:self.gosterilen_adet]
+
+        for mid, data in gosterilecek:
+            mname = data.get("name", mid)
+            mdesc = data.get("aciklama", "")
+            is_free = data.get("ucretsiz_mi", False)
+            is_uncensored = data.get("sansursuz_mu", False) or any(
+                k in f"{mid} {mname}".lower()
+                for k in ("sansürsüz", "uncensored", "venice", "cydonia", "hermes", "dolphin", "lfm", "flint")
+            )
+            mprice = data.get("fiyat", "0.00$" if is_free else "Kredili")
+            mctx = data.get("context", "128K")
+
+            row = ctk.CTkFrame(
+                self.scroll_frame,
+                fg_color="#131B2E",
+                corner_radius=6,
+                border_width=1,
+                border_color="#B45309" if is_uncensored else "#1E293B"
+            )
+            row.pack(fill="x", pady=2)
+
+            left_box = ctk.CTkFrame(row, fg_color="transparent")
+            left_box.pack(side="left", fill="both", expand=True, padx=10, pady=5)
+
+            title_row = ctk.CTkFrame(left_box, fg_color="transparent")
+            title_row.pack(fill="x")
+
+            icon = "🎁🔓" if (is_free and is_uncensored) else ("🔓" if is_uncensored else ("🎁" if is_free else "💎"))
+            ctk.CTkLabel(
+                title_row,
+                text=icon,
+                font=ctk.CTkFont(size=12)
+            ).pack(side="left", padx=(0, 4))
+
+            ctk.CTkLabel(
+                title_row,
+                text=mname,
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color="#F8FAFC"
+            ).pack(side="left")
+
+            if is_uncensored:
+                badge = ctk.CTkLabel(
+                    title_row,
+                    text=" 🔓 SANSÜRSÜZ ",
+                    font=ctk.CTkFont(size=9, weight="bold"),
+                    fg_color="#B45309",
+                    text_color="#FEF3C7",
+                    corner_radius=4
+                )
+                badge.pack(side="left", padx=6)
+
+            meta_text = f"ID: {mid}  |  Bağlam: {mctx}  |  Maliyet: {mprice}"
+            ctk.CTkLabel(
+                left_box,
+                text=meta_text,
+                font=ctk.CTkFont(size=10),
+                text_color="#F59E0B" if is_uncensored else ("#10B981" if is_free else "#93C5FD"),
+                anchor="w"
+            ).pack(fill="x", pady=(1, 0))
+
+            btn_sec = ctk.CTkButton(
+                row,
+                text="Seç",
+                font=ctk.CTkFont(size=11, weight="bold"),
+                fg_color="#D97706" if is_uncensored else ("#059669" if is_free else "#3B82F6"),
+                hover_color="#B45309" if is_uncensored else ("#047857" if is_free else "#2563EB"),
+                width=60,
+                height=26,
+                command=lambda i=mid, n=mname: self._model_sec(i, n)
+            )
+            btn_sec.pack(side="right", padx=10, pady=5)
+
+        # Daha fazla göster butonu
+        kalan = len(eslesenler) - self.gosterilen_adet
+        if kalan > 0:
+            more_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+            more_frame.pack(fill="x", pady=10)
+
+            btn_more = ctk.CTkButton(
+                more_frame,
+                text=f"⬇️ Daha Fazla Model Göster (+30) — Kalan: {kalan} model",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                fg_color="#1E293B",
+                hover_color="#334155",
+                height=34,
+                command=self._daha_fazla_goster
+            )
+            btn_more.pack(side="left", fill="x", expand=True, padx=(0, 8))
+
+            btn_all = ctk.CTkButton(
+                more_frame,
+                text=f"📋 Tümünü Listele ({len(eslesenler)})",
+                font=ctk.CTkFont(size=12),
+                fg_color="#334155",
+                hover_color="#475569",
+                width=160,
+                height=34,
+                command=self._tumunu_goster
+            )
+            btn_all.pack(side="right")
+
+    def _daha_fazla_goster(self):
+        self.gosterilen_adet += 30
+        self._arayuzu_ciz()
+
+    def _tumunu_goster(self):
+        self.gosterilen_adet = 9999
+        self._arayuzu_ciz()
+
+    def _model_sec(self, model_id: str, model_adi: str = ""):
+        if hasattr(self.parent, "active_api_model_var"):
+            self.parent.active_api_model_var.set(model_id)
+        if hasattr(self.parent, "api_engine") and self.parent.api_engine:
+            self.parent.api_engine.model_degistir(model_id)
+        if hasattr(self.parent, "_btn_api_model_etiket_guncelle"):
+            self.parent._btn_api_model_etiket_guncelle()
+        if hasattr(self.parent, "log_to_chat"):
+            self.parent.log_to_chat(
+                "SİSTEM",
+                f"🌐 Aktif Bulut Modeli Değiştirildi: {model_id} ({model_adi or model_id})",
+                final=True
+            )
+        self.destroy()
+
 
 
 # =========================================================
@@ -1058,9 +2421,13 @@ class AltarArayuzMerkezi(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self._uygulamayi_guvenli_kapat)
 
         # Alt sınıf (AltarMainUI) tarafından doldurulan varsayılan motor nitelikleri
-        self.yuklu_modeller = ["jaahas/qwen3.5-uncensored:9b"]
-        self._secili_yerel_model_bellek = "jaahas/qwen3.5-uncensored:9b"
-        self.api_modeller = ["API Modelleri Taranıyor..."]
+        self.yuklu_modeller = ["qwen2.5:7b"]
+        self.aktif_model_modu = "sansurlu"  # "sansurlu" (Standart / Filtreli / Yüksek Kalite) veya "sansursuz" (Filtresiz / Uncensored)
+        self.yazilim_sansursuz_kuant = "q8_0"  # "q4_0" (Hız Odaklı) veya "q8_0" (Kalite Odaklı)
+        self._model_modu_soruldu = False     # Kullanıcıya henüz modal açılıp soruldu mu?
+        self._modal_acik_mi = False
+        self._secili_yerel_model_bellek = "qwen2.5:7b"
+        self.api_modeller = ["openrouter/free"]
         self.api_engine = None
         self.client = None
         self.db_manager = None
@@ -1122,6 +2489,11 @@ class AltarArayuzMerkezi(ctk.CTk):
             ilk_oturum = self.oturum_yoneticisi.yeni_oturum_olustur("Genel Sohbet")
             self.aktif_oturum_id = ilk_oturum["id"]
 
+        # Sohbet Otomatik Kaydırma ve Yapay Zeka Mesaj Kuyruğu
+        self._oto_kaydir_aktif = True
+        self.ai_mesgul_mu = False
+        self._mesaj_kuyrugu = []
+
         # Karantina Kasası Yöneticisi
         self.karantina_yoneticisi = AltarKarantinaYoneticisi(_ANA_DIZIN)
 
@@ -1138,6 +2510,10 @@ class AltarArayuzMerkezi(ctk.CTk):
         self._chat_font_boyutu = 14
         self.bind_all("<Control-k>", lambda _: self.komut_paletini_ac())
         self.bind_all("<Control-K>", lambda _: self.komut_paletini_ac())
+
+        # Klavye ve Fare Kilitleme / Kilit Çözme Kısayolu (Ctrl+Tab)
+        self.bind_all("<Control-Tab>", lambda _: self.klavye_fare_kilit_degistir() or "break")
+        self.bind_all("<Control-ISO_Left_Tab>", lambda _: self.klavye_fare_kilit_degistir() or "break")
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -1171,8 +2547,17 @@ class AltarArayuzMerkezi(ctk.CTk):
                     except Exception:
                         pass
                 self.after(50, self._pencereyi_tam_ekran_yap)
+                self.after(350, self._acilis_model_modu_sor)
         except Exception:
             pass
+
+    def _acilis_model_modu_sor(self):
+        """Uygulama ilk açıldığında kullanıcıya Standart (Sansürlü) / Sansürsüz model modu tercihini sorar."""
+        if not getattr(self, "_model_modu_soruldu", False) and not getattr(self, "_modal_acik_mi", False):
+            try:
+                self.model_modu_secici_ac()
+            except Exception:
+                pass
 
     def _sinematik_animasyon_oynat(self):
         """Kullanıcının menüden veya komut paletinden sinematik doğa animasyonunu tekrar izlemesini sağlar."""
@@ -1310,9 +2695,222 @@ class AltarArayuzMerkezi(ctk.CTk):
         except Exception:
             pass
 
+    def _model_modu_guncelle(self, yeni_mod: str):
+        """Aktif model modunu ('sansurlu' veya 'sansursuz') günceller ve arayüz butonunu yeniler."""
+        self.aktif_model_modu = yeni_mod
+        self._model_modu_soruldu = True
+
+        aktif_profil = self.active_lang_var.get() if hasattr(self, "active_lang_var") else "Sohbet"
+        cozulen = self.en_uygun_yerel_modeli_coz(dil_secimi=aktif_profil)
+        self._secili_yerel_model_bellek = cozulen
+
+        if hasattr(self, "btn_model_modu"):
+            if yeni_mod == "sansursuz":
+                kuant = getattr(self, "yazilim_sansursuz_kuant", "q8_0")
+                kuant_etiket = " (Q4_0)" if "q4" in kuant and aktif_profil == "Yazılım" else " (Q8_0)" if aktif_profil == "Yazılım" else ""
+                self.btn_model_modu.configure(
+                    text=f"⚡ Sansürsüz{kuant_etiket}",
+                    fg_color="#D97706",
+                    hover_color="#B45309"
+                )
+            else:
+                self.btn_model_modu.configure(
+                    text="🛡️ Standart",
+                    fg_color="#059669",
+                    hover_color="#047857"
+                )
+
+        if yeni_mod == "sansursuz":
+            kuant_adi = "⚡ Hız (Q4_0)" if "q4" in getattr(self, "yazilim_sansursuz_kuant", "q8_0") else "🎯 Kalite (Q8_0)"
+            ek = f" [{kuant_adi}]" if aktif_profil == "Yazılım" else ""
+            mod_adi = f"⚡ Sansürsüz (Filtresiz){ek}"
+        else:
+            mod_adi = "🛡️ Standart (Sansürlü / Yüksek Kalite)"
+
+        if hasattr(self, "lbl_ek_bilgi"):
+            self.lbl_ek_bilgi.configure(text=f"⚙️ Çalışma Modu: {mod_adi} ➔ Aktif Model: {cozulen}")
+
+    def model_modu_secici_ac(self, on_confirmed=None, profil: str = None):
+        """Kullanıcıya şık bir kart arayüzü ile Sansürlü ve Sansürsüz model modunu seçtiren modal pencere."""
+        if not getattr(self, "_modal_acik_mi", False):
+            self._modal_acik_mi = True
+            try:
+                AltarModelModuModal(self, on_confirmed=on_confirmed, profil=profil)
+            except Exception as e:
+                self._modal_acik_mi = False
+                if on_confirmed and callable(on_confirmed):
+                    on_confirmed()
+
+    def en_uygun_yerel_modeli_coz(self, dil_secimi: str = "Sohbet", girdi: str = "", resim_yolu: str = None, gorev_turu: str = None) -> str:
+        """
+        Kullanıcının seçtiği kategoriye (Sohbet / Yazılım), seçilen model çalışma moduna (Sansürlü / Sansürsüz),
+        kuantizasyon tercihine (Hız Q4_0 vs Kalite Q8_0), göreve veya ekli resme göre en uygun yerel modeli tespit eder:
+        - Resim/Vision varsa: llava:latest (veya yüklü llava/vision varyantı)
+        - Yazılım:
+            * Sansürlü (Standart / Yüksek Kalite): qwen2.5-coder:7b
+            * Sansürsüz Hız Tercihi: thirdeyeai/Qwen2.5-Coder-7B-Instruct-Uncensored:Q4_0
+            * Sansürsüz Kalite Tercihi: thirdeyeai/Qwen2.5-Coder-7B-Instruct-Uncensored:Q8_0
+        - Sohbet:
+            * Sansürlü (Standart / Yüksek Kalite): qwen2.5:7b
+            * Sansürsüz (Filtresiz): huihui_ai/qwen2.5-abliterate:7b-instruct (fallback: jaahas/qwen3.5-uncensored:9b)
+        """
+        modeller = getattr(self, "yuklu_modeller", []) or []
+        temiz_modeller = [m for m in modeller if m and "Bulunamadı" not in m and "Kapalı" not in m and not m.startswith("⚡")]
+
+        aktif_mod = getattr(self, "aktif_model_modu", "sansurlu")
+
+        # 1. Görsel / Vision Kontrolü
+        if resim_yolu or gorev_turu == "vision":
+            for m in temiz_modeller:
+                if any(v in m.lower() for v in ("llava", "vision", "moondream", "bakllava")):
+                    return m
+            return "llava:latest"
+
+        if not temiz_modeller:
+            if aktif_mod == "sansursuz":
+                kuant = getattr(self, "yazilim_sansursuz_kuant", "q8_0").lower()
+                model_yazilim = "thirdeyeai/Qwen2.5-Coder-7B-Instruct-Uncensored:Q4_0" if "q4" in kuant else "thirdeyeai/Qwen2.5-Coder-7B-Instruct-Uncensored:Q8_0"
+                return "huihui_ai/qwen2.5-abliterate:7b-instruct" if dil_secimi == "Sohbet" else model_yazilim
+            return "qwen2.5:7b" if dil_secimi == "Sohbet" else "qwen2.5-coder:7b"
+
+        # 2. Yazılım / Siber Güvenlik / Kodlama Kontrolü
+        yazilim_gorevleri = ("guvenlik", "edr", "ide", "kodlama", "port", "tersine", "gcode", "hex")
+        girdi_kodu_mu = any(k in (girdi or "").lower() for k in ("def ", "class ", "import ", "python", "script", "kod ", "firewall", "port", "paket", "hex "))
+
+        if dil_secimi == "Yazılım" or gorev_turu in yazilim_gorevleri or girdi_kodu_mu:
+            if aktif_mod == "sansursuz":
+                kuant = getattr(self, "yazilim_sansursuz_kuant", "q8_0").lower()
+                if "q4" in kuant:
+                    # Kullanıcı Hız (Q4_0) tercih etti:
+                    hedef_kod_sansursuz = (
+                        "thirdeyeai/qwen2.5-coder-7b-instruct-uncensored:q4_0",
+                        "thirdeyeai/qwen2.5-coder-7b-instruct-uncensored:q8_0",
+                        "thirdeyeai",
+                        "coder-uncensored",
+                        "huihui_ai/qwen2.5-abliterate:7b-instruct",
+                        "jaahas/qwen3.5-uncensored:9b"
+                    )
+                else:
+                    # Kullanıcı Kalite (Q8_0) tercih etti:
+                    hedef_kod_sansursuz = (
+                        "thirdeyeai/qwen2.5-coder-7b-instruct-uncensored:q8_0",
+                        "thirdeyeai/qwen2.5-coder-7b-instruct-uncensored:q4_0",
+                        "thirdeyeai",
+                        "coder-uncensored",
+                        "huihui_ai/qwen2.5-abliterate:7b-instruct",
+                        "jaahas/qwen3.5-uncensored:9b"
+                    )
+                for hedef in hedef_kod_sansursuz:
+                    for m in temiz_modeller:
+                        if hedef in m.lower():
+                            return m
+                for m in temiz_modeller:
+                    if "qwen2.5-coder" in m.lower():
+                        return m
+            else:
+                hedef_kod_standart = (
+                    "qwen2.5-coder:7b",
+                    "qwen2.5-coder:latest",
+                    "qwen2.5-coder",
+                    "deepseek-coder:6.7b",
+                    "deepseek-coder",
+                    "codellama"
+                )
+                for hedef in hedef_kod_standart:
+                    for m in temiz_modeller:
+                        m_low = m.lower()
+                        if hedef in m_low and "uncensored" not in m_low and "abliterate" not in m_low and "thirdeyeai" not in m_low:
+                            return m
+                for hedef in hedef_kod_standart:
+                    for m in temiz_modeller:
+                        if hedef in m.lower():
+                            return m
+
+            for m in temiz_modeller:
+                if "coder" in m.lower() and "vision" not in m.lower():
+                    return m
+            return temiz_modeller[0]
+
+        # 3. Sohbet / Tarih / Genel Kültür / Dosya Gezgini Kontrolü
+        if aktif_mod == "sansursuz":
+            hedef_sohbet_sansursuz = (
+                "huihui_ai/qwen2.5-abliterate:7b-instruct",
+                "huihui_ai",
+                "abliterate",
+                "jaahas/qwen3.5-uncensored:9b",
+                "jaahas",
+                "dolphin3",
+                "uncensored"
+            )
+            for hedef in hedef_sohbet_sansursuz:
+                for m in temiz_modeller:
+                    if hedef in m.lower() and "vision" not in m.lower():
+                        return m
+            for m in temiz_modeller:
+                if "qwen2.5:7b" in m.lower():
+                    return m
+        else:
+            hedef_sohbet_standart = (
+                "qwen2.5:7b",
+                "qwen2.5:latest",
+                "qwen2.5",
+                "deepseek-r1:7b",
+                "deepseek-r1:8b",
+                "llama3.2:3b",
+                "llama3.2",
+                "llama3.1:8b",
+                "llama3.1"
+            )
+            for hedef in hedef_sohbet_standart:
+                for m in temiz_modeller:
+                    m_low = m.lower()
+                    if hedef in m_low and "coder" not in m_low and "uncensored" not in m_low and "abliterate" not in m_low and "vision" not in m_low and "llava" not in m_low:
+                        return m
+            for hedef in hedef_sohbet_standart:
+                for m in temiz_modeller:
+                    m_low = m.lower()
+                    if hedef in m_low and "coder" not in m_low and "vision" not in m_low and "llava" not in m_low:
+                        return m
+
+        for m in temiz_modeller:
+            if "llava" not in m.lower() and "vision" not in m.lower():
+                return m
+        return temiz_modeller[0]
+
     def _yerel_model_secimi_degisti(self, secilen_model: str):
         """Ana thread'de seçilen modeli saf Python değişkenine kaydeder (Arka plan thread güvenliği için)."""
-        self._secili_yerel_model_bellek = secilen_model
+        if "Otomatik" in secilen_model:
+            self._kullanici_manuel_model_kilitledi = False
+            cozulen = self.en_uygun_yerel_modeli_coz(dil_secimi=self.active_lang_var.get() if hasattr(self, "active_lang_var") else "Sohbet")
+            self._secili_yerel_model_bellek = cozulen
+            if hasattr(self, "lbl_ek_bilgi"):
+                mod_etiketi = "⚡ Sansürsüz" if getattr(self, "aktif_model_modu", "sansurlu") == "sansursuz" else "🛡️ Standart"
+                self.lbl_ek_bilgi.configure(text=f"⚡ Akıllı Otomatik Model [{mod_etiketi}] Aktif (Hedef: {cozulen})")
+        else:
+            self._kullanici_manuel_model_kilitledi = True
+            self._secili_yerel_model_bellek = secilen_model
+            if hasattr(self, "lbl_ek_bilgi"):
+                self.lbl_ek_bilgi.configure(text=f"📌 Manuel Model Seçildi: {secilen_model}")
+
+    def _profil_secimi_degisti(self, secilen_profil: str):
+        """Kullanıcı Profil (Sohbet / Yazılım) değiştirdiğinde otomatik modeli günceller."""
+        if not hasattr(self, "active_model_var"):
+            return
+        mevcut_model_secimi = self.active_model_var.get()
+        if not getattr(self, "_kullanici_manuel_model_kilitledi", False) or "Otomatik" in mevcut_model_secimi:
+            cozulen = self.en_uygun_yerel_modeli_coz(dil_secimi=secilen_profil)
+            self._secili_yerel_model_bellek = cozulen
+            if hasattr(self, "lbl_ek_bilgi"):
+                mod_etiketi = "⚡ Sansürsüz" if getattr(self, "aktif_model_modu", "sansurlu") == "sansursuz" else "🛡️ Standart"
+                self.lbl_ek_bilgi.configure(text=f"🤖 Profil: {secilen_profil} [{mod_etiketi}] ➔ Model: {cozulen}")
+            if hasattr(self, "btn_model_modu"):
+                aktif_mod = getattr(self, "aktif_model_modu", "sansurlu")
+                if aktif_mod == "sansursuz":
+                    kuant = getattr(self, "yazilim_sansursuz_kuant", "q8_0")
+                    kuant_etiket = " (Q4_0)" if "q4" in kuant and secilen_profil == "Yazılım" else " (Q8_0)" if secilen_profil == "Yazılım" else ""
+                    self.btn_model_modu.configure(text=f"⚡ Sansürsüz{kuant_etiket}")
+                else:
+                    self.btn_model_modu.configure(text="🛡️ Standart")
 
     def _pencereyi_tam_ekran_yap(self):
         """Tüm üst ve orta sekme bileşenleri oluşturulduktan sonra pencereyi güvenle tam ekran yapar (Windows görev çubuğu ve başlık çubuğu dahil tüm ekranı kaplar)."""
@@ -1444,15 +3042,18 @@ class AltarArayuzMerkezi(ctk.CTk):
         ctk.CTkLabel(self.top_row_1, text="Model:", font=ctk.CTkFont(size=12, weight="bold")).pack(
             side="left", padx=(4, 2)
         )
-        varsayilan_model = "jaahas/qwen3.5-uncensored:9b" if "jaahas/qwen3.5-uncensored:9b" in self.yuklu_modeller else \
-            self.yuklu_modeller[0]
-        self._secili_yerel_model_bellek = varsayilan_model
-        self.active_model_var = ctk.StringVar(value=varsayilan_model)
+        OTOMATIK_MODEL_ETIKETI = "⚡ Otomatik (Kategori/Göreve Göre)"
+        self._kullanici_manuel_model_kilitledi = False
+        temiz_modeller = [m for m in self.yuklu_modeller if m != OTOMATIK_MODEL_ETIKETI and "Kapalı" not in m and "Bulunamadı" not in m]
+        model_secenekleri = [OTOMATIK_MODEL_ETIKETI] + temiz_modeller if temiz_modeller else [OTOMATIK_MODEL_ETIKETI] + self.yuklu_modeller
+
+        self.active_model_var = ctk.StringVar(value=OTOMATIK_MODEL_ETIKETI)
+        self._secili_yerel_model_bellek = self.en_uygun_yerel_modeli_coz("Sohbet")
         self.model_selector = ctk.CTkOptionMenu(
             self.top_row_1,
             variable=self.active_model_var,
-            values=self.yuklu_modeller,
-            width=165,
+            values=model_secenekleri,
+            width=190,
             height=28,
             command=self._yerel_model_secimi_degisti
         )
@@ -1469,26 +3070,56 @@ class AltarArayuzMerkezi(ctk.CTk):
             values=profil_listesi,
             width=105,
             height=28,
-            fg_color="#4B0082"
+            fg_color="#4B0082",
+            command=self._profil_secimi_degisti
         )
-        self.lang_selector.pack(side="left", padx=(0, 8))
+        self.lang_selector.pack(side="left", padx=(0, 4))
+
+        # Model Çalışma Modu (Standart / Sansürsüz) Hızlı Gösterge ve Seçim Butonu
+        self.btn_model_modu = ctk.CTkButton(
+            self.top_row_1,
+            text="🛡️ Standart",
+            width=125,
+            height=28,
+            font=ctk.CTkFont(size=11, weight="bold"),
+            fg_color="#059669",
+            hover_color="#047857",
+            command=self.model_modu_secici_ac
+        )
+        self.btn_model_modu.pack(side="left", padx=(0, 8))
 
         ctk.CTkLabel(self.top_row_1, text="API:", font=ctk.CTkFont(size=12, weight="bold")).pack(
             side="left", padx=(4, 2)
         )
-        varsayilan_api = self.api_modeller[0] if self.api_modeller else "Bulunamadı"
+        varsayilan_api = self.api_modeller[0] if self.api_modeller else "openrouter/free"
         self.active_api_model_var = ctk.StringVar(value=varsayilan_api)
-        self.api_model_selector = ctk.CTkOptionMenu(
+        kisa_api_adi = varsayilan_api.split('/')[-1] if '/' in varsayilan_api else varsayilan_api
+        self.btn_api_model_sec = ctk.CTkButton(
             self.top_row_1,
-            variable=self.active_api_model_var,
-            values=self.api_modeller,
-            width=175,
+            text=f"🌐 {kisa_api_adi[:16]}",
+            width=150,
             height=28,
+            font=ctk.CTkFont(size=11, weight="bold"),
             fg_color="#8b0000",
-            button_color="#5c0000",
-            button_hover_color="#3d0000"
+            hover_color="#5c0000",
+            command=self.open_openrouter_model_modal
         )
-        self.api_model_selector.pack(side="left", padx=(0, 4))
+        self.btn_api_model_sec.pack(side="left", padx=(0, 2))
+
+        self.btn_api_key = ctk.CTkButton(
+            self.top_row_1,
+            text="🔑",
+            width=28,
+            height=28,
+            font=ctk.CTkFont(size=13),
+            fg_color="#1E293B",
+            hover_color="#334155",
+            border_width=1,
+            border_color="#475569",
+            command=self.open_api_key_modal
+        )
+        self.btn_api_key.pack(side="left", padx=(0, 4))
+        self.api_model_selector = None
 
         # Altar Çoklu Tema Seçici Açılır Menü
         ctk.CTkLabel(self.top_row_1, text="Tema:", font=ctk.CTkFont(size=12, weight="bold")).pack(
@@ -1510,7 +3141,7 @@ class AltarArayuzMerkezi(ctk.CTk):
         # Tema yanındaki Kilit Butonu (Klavye & Fare Donanımsal Kilitleme)
         self.btn_kilit = ctk.CTkButton(
             self.top_row_1,
-            text="🔒",
+            text="🔓",
             width=32,
             height=28,
             font=ctk.CTkFont(size=14),
@@ -1703,6 +3334,24 @@ class AltarArayuzMerkezi(ctk.CTk):
         self.ust_ince_serit = ctk.CTkFrame(self.bottom_panel, fg_color="transparent", height=22)
         self.ust_ince_serit.pack(side="top", fill="x", padx=0, pady=(0, 3))
 
+        # Mesaj Kuyruğu ve Otomatik Kaydırma Anahtarı (Sağ tarafa öncelikli yerleşim)
+        self.switch_oto_kaydir = ctk.CTkSwitch(
+            self.ust_ince_serit,
+            text="📜 Oto Kaydır",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._oto_kaydir_degisti
+        )
+        self.switch_oto_kaydir.select()
+        self.switch_oto_kaydir.pack(side="right", padx=(6, 0))
+
+        self.lbl_kuyruk_durumu = ctk.CTkLabel(
+            self.ust_ince_serit,
+            text="",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#F59E0B"
+        )
+        self.lbl_kuyruk_durumu.pack(side="right", padx=(6, 4))
+
         self.btn_ses_studyosu = ctk.CTkButton(
             self.ust_ince_serit, text="🎙️ Ses Kaydedici", width=115, height=20,
             font=ctk.CTkFont(size=11, weight="bold"),
@@ -1810,55 +3459,60 @@ class AltarArayuzMerkezi(ctk.CTk):
         self.lbl_ek_bilgi = ctk.CTkLabel(self.ust_ince_serit, text="", text_color="#00AAFF", font=ctk.CTkFont(size=12))
         self.lbl_ek_bilgi.pack(side="left", padx=4)
 
+
         self.action_frame = ctk.CTkFrame(self.bottom_panel, fg_color="transparent")
         self.action_frame.pack(side="left", padx=(0, 10))
 
-        self.btn_export = ctk.CTkButton(self.action_frame, text="💾 Raporu Kaydet", width=115, height=22,
-                                        command=self.sohbeti_disa_aktar,
-                                        fg_color="#1f538d", hover_color="#14375e")
-        self.btn_export.pack(side="top", pady=1)
+        # 2 Sütunlu Kompakt Grid Düzeni (Tüm özellikler eksiksiz korunmuş, dikey sohbet alanı %45 artırılmıştır)
+        self.action_frame.columnconfigure(0, weight=1)
+        self.action_frame.columnconfigure(1, weight=1)
 
-        self.btn_word_pro = ctk.CTkButton(self.action_frame, text="📝 Altar Belge", width=115, height=22,
-                                          command=self.word_programini_ac,
-                                          fg_color="#008080", hover_color="#005959")
-        self.btn_word_pro.pack(side="top", pady=1)
-
-        self.btn_resim = ctk.CTkButton(self.action_frame, text="📎 Resim", width=115, height=22,
+        self.btn_resim = ctk.CTkButton(self.action_frame, text="📎 Resim", width=105, height=21,
                                        command=self.resim_ekle,
                                        fg_color="#4B0082", hover_color="#2b004d")
-        self.btn_resim.pack(side="top", pady=1)
+        self.btn_resim.grid(row=0, column=0, padx=1, pady=1, sticky="ew")
 
-        self.btn_ses = ctk.CTkButton(self.action_frame, text="🎤 Ses", width=115, height=22,
-                                     command=self.sesli_yazdir,
-                                     fg_color="#006400", hover_color="#004d00")
-        self.btn_ses.pack(side="top", pady=1)
-
-        self.btn_belge = ctk.CTkButton(self.action_frame, text="📄 Belge", width=115, height=22,
+        self.btn_belge = ctk.CTkButton(self.action_frame, text="📄 Belge", width=105, height=21,
                                        command=self.belge_ekle,
                                        fg_color="#8B4500", hover_color="#5c2e00")
-        self.btn_belge.pack(side="top", pady=1)
+        self.btn_belge.grid(row=0, column=1, padx=1, pady=1, sticky="ew")
 
-        self.btn_nasa_sim = ctk.CTkButton(self.action_frame, text="🌐 Web", width=115, height=22,
+        self.btn_ses = ctk.CTkButton(self.action_frame, text="🎤 Ses", width=105, height=21,
+                                     command=self.sesli_yazdir,
+                                     fg_color="#006400", hover_color="#004d00")
+        self.btn_ses.grid(row=1, column=0, padx=1, pady=1, sticky="ew")
+
+        self.btn_word_pro = ctk.CTkButton(self.action_frame, text="📝 Altar Belge", width=105, height=21,
+                                          command=self.word_programini_ac,
+                                          fg_color="#008080", hover_color="#005959")
+        self.btn_word_pro.grid(row=1, column=1, padx=1, pady=1, sticky="ew")
+
+        self.btn_export = ctk.CTkButton(self.action_frame, text="💾 Kaydet", width=105, height=21,
+                                        command=self.sohbeti_disa_aktar,
+                                        fg_color="#1f538d", hover_color="#14375e")
+        self.btn_export.grid(row=2, column=0, padx=1, pady=1, sticky="ew")
+
+        self.btn_nasa_sim = ctk.CTkButton(self.action_frame, text="🌐 Web", width=105, height=21,
                                           command=self.toggle_nasa_sim,
                                           fg_color="#FF4500", hover_color="#8B0000")
-        self.btn_nasa_sim.pack(side="top", pady=1)
+        self.btn_nasa_sim.grid(row=2, column=1, padx=1, pady=1, sticky="ew")
 
-        self.btn_telemetri_lab = ctk.CTkButton(self.action_frame, text="📈 Radar & Alev", width=115, height=22,
+        self.btn_telemetri_lab = ctk.CTkButton(self.action_frame, text="📈 Radar & Alev", width=105, height=21,
                                                command=self.telemetri_merkezini_ac,
                                                fg_color="#00A86B", hover_color="#007F50")
-        self.btn_telemetri_lab.pack(side="top", pady=1)
+        self.btn_telemetri_lab.grid(row=3, column=0, padx=1, pady=1, sticky="ew")
 
-        self.btn_siber_hex = ctk.CTkButton(self.action_frame, text="🛡️ Siber Hex", width=115, height=22,
+        self.btn_siber_hex = ctk.CTkButton(self.action_frame, text="🛡️ Siber Hex", width=105, height=21,
                                            command=self.siber_hex_merkezini_ac,
                                            fg_color="#4B0082", hover_color="#2b004d")
-        self.btn_siber_hex.pack(side="top", pady=1)
+        self.btn_siber_hex.grid(row=3, column=1, padx=1, pady=1, sticky="ew")
 
-        self.btn_meb_sertifika = ctk.CTkButton(self.action_frame, text="📜 MEB Sertifika", width=115, height=22,
+        self.btn_meb_sertifika = ctk.CTkButton(self.action_frame, text="📜 MEB Sertifika", width=212, height=21,
                                                command=self.meb_sertifika_yoneticisi_ac,
                                                fg_color="#008B8B", hover_color="#005959")
-        self.btn_meb_sertifika.pack(side="top", pady=1)
+        self.btn_meb_sertifika.grid(row=4, column=0, columnspan=2, padx=1, pady=1, sticky="ew")
 
-        self.user_input = ctk.CTkTextbox(self.bottom_panel, font=ctk.CTkFont(size=self._chat_font_boyutu), height=145, border_width=2,
+        self.user_input = ctk.CTkTextbox(self.bottom_panel, font=ctk.CTkFont(size=self._chat_font_boyutu), height=115, border_width=2,
                                          border_color="#3a3a3a")
         self.user_input.pack(side="left", fill="both", expand=True, padx=(0, 10))
         self.user_input.bind("<Control-MouseWheel>", self._chat_font_olcekle)
@@ -1871,8 +3525,10 @@ class AltarArayuzMerkezi(ctk.CTk):
                 return "break"
 
         self.user_input.bind("<Return>", on_enter_pressed)
+        self.user_input.bind("<Control-Tab>", lambda _: self.klavye_fare_kilit_degistir() or "break")
+        self.user_input.bind("<Control-ISO_Left_Tab>", lambda _: self.klavye_fare_kilit_degistir() or "break")
 
-        self.btn_send = ctk.CTkButton(self.bottom_panel, text="İlet", width=100, height=145, command=self.send_command)
+        self.btn_send = ctk.CTkButton(self.bottom_panel, text="İlet", width=100, height=115, command=self.send_command)
         self.btn_send.pack(side="right")
 
         # Alt özel bölüm konteynerleri
@@ -1960,13 +3616,17 @@ class AltarArayuzMerkezi(ctk.CTk):
                     hover_color="#B91C1C",
                     border_color="#EF4444"
                 )
+                if hasattr(self, "lbl_ek_bilgi"):
+                    self.lbl_ek_bilgi.configure(text="🔒 Klavye & Fare KİLİTLENDİ [Açmak için: Ctrl + Tab]")
             else:
                 self.btn_kilit.configure(
-                    text="🔒",
+                    text="🔓",
                     fg_color="#1E293B",
                     hover_color="#334155",
                     border_color="#334155"
                 )
+                if hasattr(self, "lbl_ek_bilgi"):
+                    self.lbl_ek_bilgi.configure(text="🔓 Klavye & Fare Serbest [Kilitlemek için: Ctrl + Tab]")
 
     # =====================================================================
     # MERKEZİ THREAD-SAFE ARAYÜZ GÜNCELLEME DÖNGÜSÜ
@@ -2011,7 +3671,8 @@ class AltarArayuzMerkezi(ctk.CTk):
 
             if son_final:
                 self.kodlari_renklendir()
-            self.chat_display.see("end")
+            if getattr(self, "_oto_kaydir_aktif", True):
+                self.chat_display.see("end")
             self.chat_display.configure(state="disabled")
 
         try:
@@ -2056,19 +3717,45 @@ class AltarArayuzMerkezi(ctk.CTk):
     def log_to_chat(self, tag, message, final=False):
         self.update_chat_safe(f"[{tag}]: {message}\n\n", final=final)
 
+    def open_openrouter_model_modal(self):
+        """OpenRouter 470+ model kataloğunu listeleyen kaydırılabilir arayüz modalını açar."""
+        try:
+            AltarOpenRouterModelSeciciModal(self)
+        except Exception as e:
+            messagebox.showerror("Model Seçici Hatası", f"Model kataloğu açılamadı: {e}", parent=self)
+
+    def open_api_key_modal(self):
+        """OpenRouter API anahtarı yapılandırma penceresini açar."""
+        try:
+            AltarApiKeyWindow(self)
+        except Exception as e:
+            messagebox.showerror("API Anahtarı Hatası", f"Pencere açılamadı: {e}", parent=self)
+
+    def _btn_api_model_etiket_guncelle(self):
+        """Üst menüdeki API model seçim butonunun metnini günceller."""
+        try:
+            if hasattr(self, "btn_api_model_sec") and hasattr(self, "active_api_model_var"):
+                secili = self.active_api_model_var.get()
+                kisa = secili.split("/")[-1] if "/" in secili else secili
+                self.btn_api_model_sec.configure(text=f"🌐 {kisa[:16]}")
+        except Exception:
+            pass
+
     def _api_modellerini_arka_planda_yukle(self):
         try:
-            if not self.api_engine:
+            if not getattr(self, "api_engine", None):
                 return
             dinamik_api_modelleri = self.api_engine.siber_radar_modelleri_getir()
-            liste = list(dinamik_api_modelleri.keys()) if dinamik_api_modelleri else ["API Model Bulunamadı"]
+            liste = list(dinamik_api_modelleri.keys()) if dinamik_api_modelleri else ["openrouter/free"]
 
             def _guncelle():
                 if not self.winfo_exists():
                     return
                 self.api_modeller = liste
-                self.api_model_selector.configure(values=liste)
-                self.active_api_model_var.set(liste[0])
+                aktif = self.active_api_model_var.get()
+                if aktif in ("API Modelleri Taranıyor...", "Bulunamadı", "Bağlantı Hatası", "API Anahtarı Yok") and liste:
+                    self.active_api_model_var.set(liste[0])
+                self._btn_api_model_etiket_guncelle()
 
             self._ui_gorevi_ekle(_guncelle)
         except Exception:
@@ -2101,7 +3788,7 @@ class AltarArayuzMerkezi(ctk.CTk):
             threading.Thread(target=self.yerel_modeli_bellekten_bosalt, daemon=True).start()
 
     def yerel_modeli_bellege_hazirla(self):
-        """Alt sınıf (Local AI.py -> AltarMainUI) tarafından ezilir ve modeli num_ctx=2048 ile önceden ısıtır."""
+        """Alt sınıf (Local AI.py -> AltarMainUI) tarafından ezilir ve modeli num_ctx=4096 ile önceden ısıtır."""
         pass
 
     def yerel_modeli_bellekten_bosalt(self):
@@ -2118,30 +3805,46 @@ class AltarArayuzMerkezi(ctk.CTk):
             )
             return
 
-        self.tabview.set("💬 Sohbet")
-        self._ust_sekme_degisti()
+        metin_alt = (rapor_metni or "").lower()
+        if any(k in metin_alt for k in ("dosya gezgini", "dizin", "klasör", "dosya listesi")) and not any(k in metin_alt for k in ("def ", "import ", "python", "script", "c++", ".py", ".cpp", ".js")):
+            hedef_profil = "Sohbet"
+            gorev = "dosya_gezgini"
+            etiket = "Sen (Dosya Gezgini Analizi)"
+            gorev_adi = "Dosya Gezgini & Kasa Analizi"
+        else:
+            hedef_profil = "Yazılım"
+            gorev = "guvenlik"
+            etiket = "Sen (Güvenlik / Kod & EDR Analizi)"
+            gorev_adi = "Güvenlik / Kod & EDR Analizi"
+
         komut = (
-            "Aşağıda Altar Güvenlik / Tersine Mühendislik / DPI / EDR Antivirüs / Dosya Gezgini modülünden alınan teknik çıktı yer almaktadır. "
+            f"Aşağıda Altar {gorev.upper()} modülünden alınan teknik çıktı yer almaktadır. "
             "Lütfen bu veriyi detaylıca analiz et, mimari yapıyı, olası tehditleri ve satır satır işleyişi açıkla:\n\n"
             f"{rapor_metni[:6000]}"
         )
-        self.log_to_chat("Sen (Güvenlik & EDR Analizi)", "Seçili teknik çıktıyı analiz et.", final=True)
-        aktif_motor = self.motor_var.get()
+
+        self.tabview.set("💬 Sohbet")
+        self._ust_sekme_degisti()
+        if hasattr(self, "active_lang_var"):
+            self.active_lang_var.set(hedef_profil)
+            self._profil_secimi_degisti(hedef_profil)
+
+        self.log_to_chat(etiket, "Seçili teknik çıktıyı analiz et (Yerel Model).", final=True)
         secilen_dil = self.active_lang_var.get()
-        if aktif_motor == "Yerel (Ollama)":
-            secilen_model = self.active_model_var.get()
-            self._secili_yerel_model_bellek = secilen_model
-            threading.Thread(
-                target=self.model_ile_konus,
-                args=(secilen_model, secilen_dil, komut, None),
-                daemon=True
-            ).start()
+
+        if not getattr(self, "_kullanici_manuel_model_kilitledi", False) or "Otomatik" in self.active_model_var.get():
+            secilen_model = self.en_uygun_yerel_modeli_coz(dil_secimi=hedef_profil, gorev_turu=gorev, girdi=komut)
         else:
-            threading.Thread(
-                target=self.api_ile_konus,
-                args=(self.active_api_model_var.get(), secilen_dil, komut, None),
-                daemon=True
-            ).start()
+            secilen_model = self.active_model_var.get()
+
+        self._secili_yerel_model_bellek = secilen_model
+        self.ai_mesgul_mu = True
+        self._kuyruk_arayuzunu_guncelle()
+        threading.Thread(
+            target=self._ai_is_sarmalayici,
+            args=("yerel", secilen_model, secilen_dil, komut, None),
+            daemon=True
+        ).start()
 
     def _dogal_dil_komut_koprusu(self, komut: str) -> bool:
         """
@@ -2224,6 +3927,105 @@ class AltarArayuzMerkezi(ctk.CTk):
             )
             return
 
+        aktif_motor = self.motor_var.get()
+        secilen_dil = self.active_lang_var.get() if hasattr(self, "active_lang_var") else "Sohbet"
+
+        # İlk sorgudan önce Yerel Ollama motoru seçiliyse ve mod henüz sorulmamışsa modal ile sor
+        if aktif_motor == "Yerel (Ollama)" and not getattr(self, "_model_modu_soruldu", False):
+            self.model_modu_secici_ac(on_confirmed=self._send_command_devam, profil=secilen_dil)
+            return
+
+        self._send_command_devam()
+
+    def _oto_kaydir_degisti(self):
+        """Kullanıcı sohbet otomatik kaydırma anahtarını değiştirdiğinde tetiklenir."""
+        if hasattr(self, "switch_oto_kaydir"):
+            self._oto_kaydir_aktif = bool(self.switch_oto_kaydir.get())
+            if self._oto_kaydir_aktif:
+                self.chat_display.see("end")
+
+    def _kuyruk_arayuzunu_guncelle(self):
+        """Mesaj kuyruğu ve yapay zeka işlem durumunu arayüzde gerçek zamanlı yansıtır."""
+        if not hasattr(self, "lbl_kuyruk_durumu"):
+            return
+        kuyruk_sayisi = len(getattr(self, "_mesaj_kuyrugu", []))
+        mesgul = getattr(self, "ai_mesgul_mu", False)
+        if kuyruk_sayisi > 0:
+            self.lbl_kuyruk_durumu.configure(
+                text=f"⏳ Kuyruk: {kuyruk_sayisi} Bekliyor",
+                text_color="#F59E0B"
+            )
+        elif mesgul:
+            self.lbl_kuyruk_durumu.configure(
+                text="⚡ Yanıt Üretiliyor...",
+                text_color="#10B981"
+            )
+        else:
+            self.lbl_kuyruk_durumu.configure(text="")
+
+    def _ai_yanit_tamamlandi_bildir(self):
+        """Mevcut model yanıtını tamamladığında çağrılır; kuyruktaki bir sonraki mesajı otomatik işleme alır."""
+        try:
+            if hasattr(self, "_mesaj_kuyrugu") and self._mesaj_kuyrugu:
+                sonraki = self._mesaj_kuyrugu.pop(0)
+                self.ai_mesgul_mu = True
+                self._kuyruk_arayuzunu_guncelle()
+                self._gorevi_ai_modeline_gonder(
+                    sonraki["motor"],
+                    sonraki["dil"],
+                    sonraki["cmd"],
+                    sonraki.get("resim")
+                )
+            else:
+                self.ai_mesgul_mu = False
+                self._kuyruk_arayuzunu_guncelle()
+        except Exception:
+            self.ai_mesgul_mu = False
+            self._kuyruk_arayuzunu_guncelle()
+
+    def _ai_is_sarmalayici(self, tip: str, model_adi: str, secilen_dil: str, cmd: str, resim_dosyasi=None):
+        """Tüm yapay zeka işlemlerini (yerel veya bulut) sarmalar, hata durumunda arayüzü korur ve iş bitince kuyruğu ilerletir."""
+        try:
+            if tip == "yerel":
+                self.model_ile_konus(model_adi, secilen_dil, cmd, resim_dosyasi)
+            else:
+                self.api_ile_konus(model_adi, secilen_dil, cmd, resim_dosyasi)
+        except Exception as e:
+            self.log_to_chat("HATA", f"Yapay zeka iş parçacığında hata oluştu: {e}", final=True)
+        finally:
+            self.after(50, self._ai_yanit_tamamlandi_bildir)
+
+    def _gorevi_ai_modeline_gonder(self, aktif_motor: str, secilen_dil: str, cmd: str, resim_dosyasi=None):
+        """Yapay zeka görevini arka plan iş parçacığına güvenle iletir."""
+        self.ai_mesgul_mu = True
+        self._kuyruk_arayuzunu_guncelle()
+
+        if aktif_motor == "Yerel (Ollama)":
+            mevcut_var = self.active_model_var.get()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) or "Otomatik" in mevcut_var or (resim_dosyasi and "llava" not in mevcut_var.lower() and "vision" not in mevcut_var.lower()):
+                secilen_model = self.en_uygun_yerel_modeli_coz(dil_secimi=secilen_dil, girdi=cmd, resim_yolu=resim_dosyasi)
+            else:
+                secilen_model = mevcut_var
+
+            self._secili_yerel_model_bellek = secilen_model
+            threading.Thread(
+                target=self._ai_is_sarmalayici,
+                args=("yerel", secilen_model, secilen_dil, cmd, resim_dosyasi),
+                daemon=True
+            ).start()
+        else:
+            secilen_api_modeli = self.active_api_model_var.get()
+            threading.Thread(
+                target=self._ai_is_sarmalayici,
+                args=("bulut", secilen_api_modeli, secilen_dil, cmd, resim_dosyasi),
+                daemon=True
+            ).start()
+
+    def _send_command_devam(self):
+        cmd = self.user_input.get("1.0", "end-1c").strip()
+        if not cmd and not self.ekli_resim_yolu:
+            return
+
         self.user_input.delete("1.0", "end")
 
         if cmd.startswith("!"):
@@ -2240,15 +4042,22 @@ class AltarArayuzMerkezi(ctk.CTk):
         self.ekli_resim_yolu = None
         self.lbl_ek_bilgi.configure(text="")
 
-        if aktif_motor == "Yerel (Ollama)":
-            secilen_model = self.active_model_var.get()
-            self._secili_yerel_model_bellek = secilen_model
-            threading.Thread(target=self.model_ile_konus, args=(secilen_model, secilen_dil, cmd, resim_dosyasi),
-                             daemon=True).start()
-        else:
-            secilen_api_modeli = self.active_api_model_var.get()
-            threading.Thread(target=self.api_ile_konus, args=(secilen_api_modeli, secilen_dil, cmd, resim_dosyasi),
-                             daemon=True).start()
+        # Eğer yapay zeka şu an bir yanıt üretiyorsa, bu mesajı güvenli FIFO kuyruğuna al
+        if getattr(self, "ai_mesgul_mu", False):
+            gorev = {
+                "motor": aktif_motor,
+                "dil": secilen_dil,
+                "cmd": cmd,
+                "resim": resim_dosyasi
+            }
+            self._mesaj_kuyrugu.append(gorev)
+            self._kuyruk_arayuzunu_guncelle()
+            kuyruk_sira = len(self._mesaj_kuyrugu)
+            self.log_to_chat("Sistem", f"⏳ Yapay zeka modeli şu an meşgul. Mesajınız sıraya alındı (Sıra #{kuyruk_sira}). Önceki yanıt tamamlandığında otomatik cevaplanacaktır.\n", final=True)
+            return
+
+        # Yapay zeka boşta ise doğrudan yürüt
+        self._gorevi_ai_modeline_gonder(aktif_motor, secilen_dil, cmd, resim_dosyasi)
 
     # Alt sınıf (Local AI.py -> AltarMainUI) tarafından ezilen (override edilen) sanal metot imzaları
     def model_ile_konus(self, model_adi, dil_secimi, girdi, resim_yolu=None):
@@ -2412,24 +4221,36 @@ class AltarArayuzMerkezi(ctk.CTk):
             if not getattr(self, "_oyun_yuklendi", False):
                 self._oyun_yuklendi = True
                 self._oyun_sekmesini_tekil_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Sohbet")
+                self._profil_secimi_degisti("Sohbet")
             self.bottom_panel.pack_forget()
 
         elif "Müzik" in aktif_sekme:
             if not getattr(self, "_muzik_yuklendi", False):
                 self._muzik_yuklendi = True
                 self._muzik_sekmesini_tekil_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Sohbet")
+                self._profil_secimi_degisti("Sohbet")
             self.bottom_panel.pack_forget()
 
         elif "Dosya Gezgini" in aktif_sekme:
             if not self._gezgin_yuklendi:
                 self._gezgin_yuklendi = True
                 self._gezgin_sekmesini_tekil_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Sohbet")
+                self._profil_secimi_degisti("Sohbet")
             self.bottom_panel.pack_forget()
 
         elif aktif_sekme == "📐 CNC G-Code 2D Simülatör":
             if not self._gcode_yuklendi:
                 self._gcode_yuklendi = True
                 self._gcode_simulator_sekmesini_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Yazılım")
+                self._profil_secimi_degisti("Yazılım")
             self.bottom_panel.pack_forget()
 
         elif aktif_sekme == "🛡️ Güvenlik":
@@ -2439,6 +4260,9 @@ class AltarArayuzMerkezi(ctk.CTk):
             if not getattr(self, "_guvenlik_alt_yuklendi", False):
                 self._guvenlik_alt_yuklendi = True
                 self._guvenlik_alt_panellerini_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Yazılım")
+                self._profil_secimi_degisti("Yazılım")
             self.bottom_panel.pack(side="bottom", fill="x", padx=10, pady=(0, 10), before=self.tabview)
             self.ust_ince_serit.pack_forget()
             self.action_frame.pack_forget()
@@ -2452,6 +4276,9 @@ class AltarArayuzMerkezi(ctk.CTk):
             if not self._analiz_alt_yuklendi:
                 self._analiz_alt_yuklendi = True
                 self._analiz_alt_panellerini_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Sohbet")
+                self._profil_secimi_degisti("Sohbet")
             self.bottom_panel.pack(side="bottom", fill="x", padx=10, pady=(0, 10), before=self.tabview)
             self.ust_ince_serit.pack_forget()
             self.action_frame.pack_forget()
@@ -2465,6 +4292,9 @@ class AltarArayuzMerkezi(ctk.CTk):
             if not self._tersine_yuklendi:
                 self._tersine_yuklendi = True
                 self._tersine_muhendislik_sekmesini_tekil_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Yazılım")
+                self._profil_secimi_degisti("Yazılım")
             self.bottom_panel.pack(side="bottom", fill="x", padx=10, pady=(0, 10), before=self.tabview)
             self.ust_ince_serit.pack_forget()
             self.action_frame.pack_forget()
@@ -2478,12 +4308,18 @@ class AltarArayuzMerkezi(ctk.CTk):
             if not self._edr_yuklendi:
                 self._edr_yuklendi = True
                 self._edr_sekmesini_tekil_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Yazılım")
+                self._profil_secimi_degisti("Yazılım")
             self.bottom_panel.pack_forget()
 
         elif aktif_sekme == "🐍 Python IDE & Editör":
             if not self._ide_yuklendi:
                 self._ide_yuklendi = True
                 self._ide_sekmesini_tekil_hazirla()
+            if not getattr(self, "_kullanici_manuel_model_kilitledi", False) and hasattr(self, "active_lang_var"):
+                self.active_lang_var.set("Yazılım")
+                self._profil_secimi_degisti("Yazılım")
             self.bottom_panel.pack_forget()
 
         else:
@@ -2834,30 +4670,30 @@ class AltarArayuzMerkezi(ctk.CTk):
             messagebox.showwarning("Uyarı", "Analiz edilecek kazınmış veri bulunamadı.", parent=self)
             return
 
-        self.tabview.set("💬 Sohbet")
-        self._ust_sekme_degisti()
         komut = (
             f"Aşağıda web kazıyıcı tarafından kategorize edilmiş veriler yer almaktadır. "
             f"Lütfen bu verileri detaylıca incele, önemli bulguları, sayısal değerleri ve kritik noktaları raporla:\n\n{icerik[:6000]}"
         )
-        self.log_to_chat("Sen (Analiz Merkezi)", "Seçili kategorize web verisini analiz et.", final=True)
 
-        aktif_motor = self.motor_var.get()
+        self.tabview.set("💬 Sohbet")
+        self._ust_sekme_degisti()
+        self.log_to_chat("Sen (Analiz Merkezi)", "Seçili kategorize web verisini analiz et (Yerel Model).", final=True)
         secilen_dil = self.active_lang_var.get()
-        if aktif_motor == "Yerel (Ollama)":
-            secilen_model = self.active_model_var.get()
-            self._secili_yerel_model_bellek = secilen_model
-            threading.Thread(
-                target=self.model_ile_konus,
-                args=(secilen_model, secilen_dil, komut, None),
-                daemon=True
-            ).start()
+
+        mevcut_var = self.active_model_var.get()
+        if not getattr(self, "_kullanici_manuel_model_kilitledi", False) or "Otomatik" in mevcut_var:
+            secilen_model = self.en_uygun_yerel_modeli_coz(dil_secimi=secilen_dil, girdi=komut, gorev_turu="analiz")
         else:
-            threading.Thread(
-                target=self.api_ile_konus,
-                args=(self.active_api_model_var.get(), secilen_dil, komut, None),
-                daemon=True
-            ).start()
+            secilen_model = mevcut_var
+
+        self._secili_yerel_model_bellek = secilen_model
+        self.ai_mesgul_mu = True
+        self._kuyruk_arayuzunu_guncelle()
+        threading.Thread(
+            target=self._ai_is_sarmalayici,
+            args=("yerel", secilen_model, secilen_dil, komut, None),
+            daemon=True
+        ).start()
 
     # =====================================================================
     # SWANSOFT 3D VE DAHİLİ 2D G-CODE SİMÜLATÖR METOTLARI
@@ -3101,24 +4937,21 @@ class AltarArayuzMerkezi(ctk.CTk):
 
         self.tabview.set("💬 Sohbet")
         self._ust_sekme_degisti()
-        self.log_to_chat("Sen (NASA Yanma Analizi)", komut, final=True)
+        self.log_to_chat("Sen (NASA Yanma Analizi)", f"{komut} (Yerel Model)", final=True)
 
-        aktif_motor = self.motor_var.get()
-        if aktif_motor == "Yerel (Ollama)":
-            secilen_model = self.active_model_var.get()
-            self._secili_yerel_model_bellek = secilen_model
-            threading.Thread(
-                target=self.model_ile_konus,
-                args=(secilen_model, "NASA Yanma Analizi", komut, None),
-                daemon=True
-            ).start()
+        mevcut_var = self.active_model_var.get()
+        if not getattr(self, "_kullanici_manuel_model_kilitledi", False) or "Otomatik" in mevcut_var:
+            secilen_model = self.en_uygun_yerel_modeli_coz(dil_secimi="NASA Yanma Analizi", girdi=komut, gorev_turu="nasa")
         else:
-            secilen_api_modeli = self.active_api_model_var.get()
-            threading.Thread(
-                target=self.api_ile_konus,
-                args=(secilen_api_modeli, "NASA Yanma Analizi", komut, None),
-                daemon=True
-            ).start()
+            secilen_model = mevcut_var
+        self._secili_yerel_model_bellek = secilen_model
+        self.ai_mesgul_mu = True
+        self._kuyruk_arayuzunu_guncelle()
+        threading.Thread(
+            target=self._ai_is_sarmalayici,
+            args=("yerel", secilen_model, "NASA Yanma Analizi", komut, None),
+            daemon=True
+        ).start()
 
     def telemetri_merkezini_ac(self):
         if not TELEMETRI_MERKEZI_AVAILABLE:
@@ -3173,7 +5006,11 @@ class AltarArayuzMerkezi(ctk.CTk):
         if dosya:
             self.ekli_resim_yolu = dosya
             dosya_adi = os.path.basename(dosya)
-            self.lbl_ek_bilgi.configure(text=f"📎 Eklendi: {dosya_adi}")
+            vision_bilgi = ""
+            if self.motor_var.get() == "Yerel (Ollama)":
+                v_model = self.en_uygun_yerel_modeli_coz(resim_yolu=dosya, gorev_turu="vision")
+                vision_bilgi = f" (Vision: {v_model})"
+            self.lbl_ek_bilgi.configure(text=f"📎 Eklendi: {dosya_adi}{vision_bilgi}")
 
     def belge_ekle(self):
         dosya = filedialog.askopenfilename(
@@ -3263,7 +5100,11 @@ class AltarArayuzMerkezi(ctk.CTk):
                 goruntu = ImageGrab.grab(bbox=(x1, y1, x2, y2))
                 goruntu.save(kayit_yolu, "PNG")
                 self.ekli_resim_yolu = kayit_yolu
-                self.lbl_ek_bilgi.configure(text=f"✂️ Ekran Bölgesi Eklendi: {os.path.basename(kayit_yolu)}")
+                vision_bilgi = ""
+                if self.motor_var.get() == "Yerel (Ollama)":
+                    v_model = self.en_uygun_yerel_modeli_coz(resim_yolu=kayit_yolu, gorev_turu="vision")
+                    vision_bilgi = f" (Vision: {v_model})"
+                self.lbl_ek_bilgi.configure(text=f"✂️ Ekran Bölgesi Eklendi: {os.path.basename(kayit_yolu)}{vision_bilgi}")
                 self.tabview.set("💬 Sohbet")
                 self._ust_sekme_degisti()
                 if not self.user_input.get("1.0", "end-1c").strip():

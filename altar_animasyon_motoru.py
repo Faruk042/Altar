@@ -49,9 +49,9 @@ def _intro_gorseli_bul() -> Optional[str]:
     """Masaüstü veya proje dizinindeki sinematik açılış görselini (images.jpg) tespit eder."""
     proje_dizini = os.path.dirname(os.path.abspath(__file__))
     adaylar = [
+        r"C:\Users\Burak\Desktop\images.jpg",
         os.path.join(proje_dizini, "images.jpg"),
         os.path.join(proje_dizini, "assets", "altar_intro_images.jpg"),
-        r"C:\Users\Burak\Desktop\images.jpg",
     ]
     if getattr(sys, "frozen", False):
         exe_d = os.path.dirname(sys.executable)
@@ -122,22 +122,25 @@ class AltarDogaSplashPenceresi(tk.Toplevel):
             try:
                 from PIL import Image, ImageEnhance, ImageFilter, ImageTk
                 orig = Image.open(self.gorsel_yolu).convert("RGB")
-                
-                # 1. Atmosferik bulanıklaştırılmış tam ekran zemin
-                bg_full = orig.resize((self.ekran_g, self.ekran_y), Image.Resampling.BILINEAR)
-                bg_blur = bg_full.filter(ImageFilter.GaussianBlur(radius=22))
-                
-                # 2. Keskin ve odaklı merkez görsel (ekranın %68 yüksekliği)
-                hedef_y = int(self.ekran_y * 0.68)
-                hedef_g = int(orig.width * (hedef_y / orig.height))
-                center_sharp = orig.resize((hedef_g, hedef_y), Image.Resampling.LANCZOS)
-                
-                # 3. Kompozit taban oluştur
-                taban = bg_blur.copy()
-                mac_x = (self.ekran_g - hedef_g) // 2
-                mac_y = (self.ekran_y - hedef_y) // 2
-                self._center_bounds = (mac_x, mac_y, mac_x + hedef_g, mac_y + hedef_y)
-                taban.paste(center_sharp, (mac_x, mac_y))
+                ar = orig.width / max(1, orig.height)
+
+                # Geniş ekran (16:9) veya dikey format kontrolü
+                if ar >= 1.4:
+                    # 16:9 Full HD görsel doğrudan tam ekran kristal netliğinde sunulur
+                    taban = orig.resize((self.ekran_g, self.ekran_y), Image.Resampling.LANCZOS)
+                    self._center_bounds = (0, 0, self.ekran_g, self.ekran_y)
+                else:
+                    # Dikey görsel ise sinematik bulanık arka plan + merkez odak
+                    bg_full = orig.resize((self.ekran_g, self.ekran_y), Image.Resampling.BILINEAR)
+                    bg_blur = bg_full.filter(ImageFilter.GaussianBlur(radius=22))
+                    hedef_y = int(self.ekran_y * 0.72)
+                    hedef_g = int(orig.width * (hedef_y / orig.height))
+                    center_sharp = orig.resize((hedef_g, hedef_y), Image.Resampling.LANCZOS)
+                    taban = bg_blur.copy()
+                    mac_x = (self.ekran_g - hedef_g) // 2
+                    mac_y = (self.ekran_y - hedef_y) // 2
+                    self._center_bounds = (mac_x, mac_y, mac_x + hedef_g, mac_y + hedef_y)
+                    taban.paste(center_sharp, (mac_x, mac_y))
                 
                 # 4. Kademeli aydınlanma (fade-in) kareleri
                 for step in range(16):

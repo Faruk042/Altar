@@ -99,9 +99,9 @@ class AltarSinematikAcilisPenceresi(QWidget):
         self.pixmap = None
         proje_kok = os.path.dirname(os.path.abspath(__file__))
         olasi_gorseller = [
+            r"C:\Users\Burak\Desktop\images.jpg",
             os.path.join(proje_kok, "images.jpg"),
             os.path.join(proje_kok, "assets", "altar_intro_images.jpg"),
-            r"C:\Users\Burak\Desktop\images.jpg"
         ]
         if getattr(sys, "frozen", False):
             exe_d = os.path.dirname(sys.executable)

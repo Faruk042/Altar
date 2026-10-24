@@ -42,7 +42,7 @@ class AltarAgenticCore:
         if not self._devam_edebilir_mi():
             return ""
         opts = dict(options or {})
-        opts["num_ctx"] = min(int(opts.get("num_ctx", self.sabit_ctx)), 2048)
+        opts["num_ctx"] = min(int(opts.get("num_ctx", self.sabit_ctx)), 4096)
 
         payload = {
             "model": model_adi,

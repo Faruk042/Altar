@@ -3,17 +3,15 @@
 ========================================================================================
 ALTAR DONANIM KLAVYE & FARE ÇİFT KİLİT MOTORU (altar_klavye_kilit.py)
 ========================================================================================
-* Tema yanındaki kilit butonuna tıklandığında veya F11 ile tetiklendiğinde:
+* Tema yanındaki kilit butonuna tıklandığında veya Ctrl + Tab ile tetiklendiğinde:
   - Hem KLAVYE hem de FARE / DOKUNMATİK YÜZEY (Touchpad) eş zamanlı olarak kilitlenir.
   - Windows işletim sistemi çekirdek seviyesinde (WH_KEYBOARD_LL ve WH_MOUSE_LL hook)
     tüm tuş basımları, imleç hareketleri ve tıklamalar yutulur (drop event).
   - Ekranda hafif saydam siber HUD Toast bildirimi ve işitsel geri bildirim (Beep) verilir.
   - Açıldığında ise hem klavye hem de fare kilidi anında eş zamanlı serbest bırakılır.
-* Açma (Kilit Çözme) Yöntemleri:
-  - Klavyeden 'ESC' veya 'F11' tuşuna basıldığında kilit anında açılır.
-  - Fareden hızlıca 'Çift Tık' yapıldığında kilit anında açılır.
-  - Acil durum mandalı: 'Pause/Break' tuşu kilidi doğrudan düşürür.
-  - Windows çekirdek koruması (Ctrl+Alt+Del) her zaman açıktır (%0 kilitli kalma riski).
+* Kilitleme ve Açma (Kilit Çözme) Kombinasyonu:
+  - YALNIZCA 'Ctrl + Tab' tuş kombinasyonu kilidi açar ve kapatır.
+  - Eski ESC, F11 veya fare çift tıklama gibi yöntemler devre dışıdır.
   - Altar kapatıldığında kancalar otomatik olarak serbest bırakılır.
 ========================================================================================
 """
@@ -51,7 +49,9 @@ WM_SYSKEYDOWN = 0x0104
 WM_SYSKEYUP = 0x0105
 WM_LBUTTONDOWN = 0x0201
 
-VK_ESCAPE = 0x1B   # ESC Tuşu (En kolay kilit açma tuşu)
+VK_TAB = 0x09      # Tab Tuşu
+VK_CONTROL = 0x11  # Ctrl Tuşu
+VK_ESCAPE = 0x1B   # ESC Tuşu (Acil durum kilit açma tuşu)
 VK_F11 = 0x7A      # F11 Tuşu
 VK_PAUSE = 0x13    # Pause/Break Tuşu (Acil Çıkış)
 
@@ -97,6 +97,7 @@ class AltarKlavyeFareKilitServisi:
     def __init__(self):
         self.kilitli: bool = False
         self.calisiyor: bool = False
+        self._ctrl_basili: bool = False
         self._kbd_hook_id = None
         self._mouse_hook_id = None
         self._kbd_hook_proc = None
@@ -119,9 +120,13 @@ class AltarKlavyeFareKilitServisi:
 
     def kilit_durumu_ayarla(self, kilitli: bool) -> None:
         """Kilit durumunu programatik veya buton üzerinden günceller."""
+        simdi = time.time()
+        if (simdi - self._son_tetikleme_zamani) < 0.35:
+            return
+        self._son_tetikleme_zamani = simdi
         if self.kilitli != kilitli:
             self.kilitli = kilitli
-            self._sesli_ve_gorsel_bildirim(self.kilitli)
+            threading.Thread(target=self._sesli_ve_gorsel_bildirim, args=(self.kilitli,), daemon=True).start()
             if callable(self._durum_degisti_callback):
                 try:
                     self._durum_degisti_callback(self.kilitli)
@@ -189,9 +194,9 @@ class AltarKlavyeFareKilitServisi:
 
                 renk = "#EF4444" if kilitlendi else "#10B981"
                 metin = (
-                    "🔒 KLAVYE & FARE KİLİTLENDİ (Açmak için: [ESC] veya Çift Tık)"
+                    "🔒 KLAVYE & FARE KİLİTLENDİ (Açmak için: [Ctrl + Tab])"
                     if kilitlendi else
-                    "🔓 KLAVYE & FARE SERBEST (Tüm Girişler Aktif)"
+                    "🔓 KLAVYE & FARE SERBEST (Kilitlemek için: [Ctrl + Tab])"
                 )
 
                 lbl = tk.Label(
@@ -231,20 +236,28 @@ class AltarKlavyeFareKilitServisi:
                 kb = KBDLLHOOKSTRUCT.from_address(lParam)
                 vk = kb.vkCode
 
+                # Ctrl tuşu durumunu gerçek zamanlı izle (Left Ctrl: 0xA2, Right Ctrl: 0xA3, Control: 0x11)
+                if vk in (VK_CONTROL, 0xA2, 0xA3):
+                    if wParam in (WM_KEYDOWN, WM_SYSKEYDOWN):
+                        self._ctrl_basili = True
+                    elif wParam in (WM_KEYUP, WM_SYSKEYUP):
+                        self._ctrl_basili = False
+
                 if wParam in (WM_KEYDOWN, WM_SYSKEYDOWN):
-                    simdi = time.time()
-                    # F11 tuşu ile geçiş
-                    if vk == VK_F11 and (simdi - self._son_tetikleme_zamani) > 0.35:
-                        self._son_tetikleme_zamani = simdi
+                    # Ctrl tuşu basılı mı kontrolü (Olay takibi + GetAsyncKeyState hibrit denetim)
+                    ctrl_aktif = (
+                        getattr(self, "_ctrl_basili", False)
+                        or bool(user32.GetAsyncKeyState(VK_CONTROL) & 0x8000)
+                        or bool(user32.GetAsyncKeyState(0xA2) & 0x8000)
+                        or bool(user32.GetAsyncKeyState(0xA3) & 0x8000)
+                    )
+
+                    # YALNIZCA Ctrl + Tab tuş kombinasyonu (Hem Kilitleme Hem Açma)
+                    if vk == VK_TAB and ctrl_aktif:
                         self.kilit_durumu_ayarla(not self.kilitli)
                         return 1
 
-                    # Kilitliyken ESC veya Pause/Break basıldığında kilidi doğrudan aç
-                    if self.kilitli and vk in (VK_ESCAPE, VK_PAUSE):
-                        self.kilit_durumu_ayarla(False)
-                        return 1
-
-                # Eğer kilitliyse diğer tüm klavye girişlerini yut (Drop Key Event)
+                # Eğer kilitliyse diğer tüm klavye girişlerini tamamen yut (Drop Key Event)
                 if self.kilitli:
                     return 1
 
@@ -252,17 +265,7 @@ class AltarKlavyeFareKilitServisi:
 
         def _low_level_mouse_proc(nCode, wParam, lParam):
             if nCode >= 0 and self.kilitli:
-                # Kilitliyken hızlı çift tıklama ile kilit açma kontrolü
-                if wParam == WM_LBUTTONDOWN:
-                    simdi = time.time()
-                    if (simdi - self._son_mouse_tiklama) < 0.40:
-                        # 400ms içinde çift tıklama yapıldı -> Kilidi Aç!
-                        self.kilit_durumu_ayarla(False)
-                        return 1
-                    self._son_mouse_tiklama = simdi
-                    return 1
-
-                # Kilitliyken tüm fare hareketlerini, kaydırmaları ve tıklamaları engelle
+                # Kilitliyken tüm fare hareketlerini, kaydırmaları ve tıklamaları tamamen engelle
                 return 1
             return user32.CallNextHookEx(self._mouse_hook_id, nCode, wParam, lParam)
 

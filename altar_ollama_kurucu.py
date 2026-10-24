@@ -124,13 +124,23 @@ def ollama_kurulum_gerekli_mi() -> bool:
     if not exe_yolu or not os.path.isfile(exe_yolu):
         return True
 
-    # Eğer servis çalışıyorsa model kontrolü yap
+    # Eğer servis çalışıyorsa model kontrolü yap (qwen3.5:9b hariç diğer temel modeller)
     if ollama_calisiyor_mu():
         modeller = yuklu_modeller_listesi()
-        gerekli = ["jaahas/qwen3.5-uncensored:9b", "llava:latest"]
+        gerekli = [
+            "qwen2.5:7b",
+            "huihui_ai/qwen2.5-abliterate:7b-instruct",
+            "qwen2.5-coder:7b",
+            "thirdeyeai/Qwen2.5-Coder-7B-Instruct-Uncensored:Q8_0",
+            "llava:latest"
+        ]
         for g in gerekli:
-            if not any(g in m for m in modeller):
-                return True
+            if "thirdeyeai" in g:
+                if not any("thirdeyeai" in m.lower() for m in modeller):
+                    return True
+            else:
+                if not any(g.lower() in m.lower() for m in modeller):
+                    return True
         return False
     return False
 
@@ -399,9 +409,12 @@ class AltarOllamaSinematikSetup(ctk.CTk):
 
             self._arayuz_guncelle(lambda: (self.k_servis["durum"].configure(text="✔ Aktif (Port 11434)", text_color="#10B981"), self.progress_bar.set(0.55)))
 
-            # 5. ADIM: Gerekli Yapay Zeka Modellerini Otomatik Çekme
+            # 5. ADIM: Gerekli Yapay Zeka Modellerini Otomatik Çekme (qwen3.5:9b hariç temel modeller)
             modeller = [
-                "jaahas/qwen3.5-uncensored:9b",
+                "qwen2.5:7b",
+                "huihui_ai/qwen2.5-abliterate:7b-instruct",
+                "qwen2.5-coder:7b",
+                "thirdeyeai/Qwen2.5-Coder-7B-Instruct-Uncensored:Q8_0",
                 "llava:latest"
             ]
 
@@ -410,7 +423,10 @@ class AltarOllamaSinematikSetup(ctk.CTk):
 
             for idx, m in enumerate(modeller):
                 self._log(f"\n[*] Model kontrol ediliyor [{idx+1}/{toplam}]: {m}")
-                if any(m in yuklu for yuklu in mevcut_modeller):
+                if "thirdeyeai" in m and any("thirdeyeai" in yuklu.lower() for yuklu in mevcut_modeller):
+                    self._log(f"[OK] {m} (veya eşdeğer varyantı) zaten sistemde hazır.")
+                    continue
+                elif any(m.lower() in yuklu.lower() for yuklu in mevcut_modeller):
                     self._log(f"[OK] {m} zaten sistemde hazır.")
                     continue
 
