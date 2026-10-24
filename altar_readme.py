@@ -96,6 +96,11 @@ tersine mühendislik, endüstriyel CNC simülasyonu ve NASA mikroçekim yarışm
   • Tüm paneller yarı-saydam siber cam (glassmorphism) stiliyle tasarlanmıştır.
   • Arkasında her sekmeye özel olarak atanmış 60 FPS prosedürel parçacık animasyonu akar.
   • CPU yükü diferansiyel optimizasyon ile <%1 seviyesinde tutulur.
+
+📌 4. DONANIM KİLİT MOTORU (Ctrl + Tab) VE KOMPAKT IZGARA:
+  • 'Ctrl + Tab' kısayoluyla klavye ve fare girişlerini anında kilitleyebilir veya kilidi açabilirsiniz.
+  • 0.35s debouncing filtresi ve iki tonlu sesli bildirim (winsound) ile güvenli çalışma sağlar.
+  • 13+ yardımcı araç 2 sütunlu kompakt bir ızgarada toplanarak geniş çalışma alanı kazandırılmıştır.
 """
     },
     "sohbet": {
@@ -136,6 +141,11 @@ tersine mühendislik, endüstriyel CNC simülasyonu ve NASA mikroçekim yarışm
   • 📄 Belge Ekle  : PDF, Word, Altar ve TXT belgelerini ayıklar ve AI'a özetletir.
   • 🎤 Sesli Yazdır : Konuşmanızı metne dönüştürerek anında komut satırına yazar.
   • ✂️ Ekranı Sor  : Ekrandan fare ile dilediğiniz bölgeyi kırpıp doğrudan AI'a soru olarak sorar.
+
+📌 4. ASENKRON MESAJ KUYRUĞU (FIFO) & AKILLI OTO-KAYDIRMA:
+  • Model yanıt üretirken yeni bir mesaj yazdığınızda arayüz donmaz; ileti sıraya alınır (⏳ Kuyruk: X mesaj beklemede). Model yanıtı bitirince sıradaki ileti otomatik işlenir.
+  • '📜 Oto Kaydır' anahtarı ile yeni yanıtlarda sayfanın otomatik aşağı kaymasını açabilir veya geçmişi okurken konumu sabitleyebilirsiniz.
+  • 'OpenRouter API Anahtarı' penceresiyle sk-or-v1-... anahtarınızı canlı test edebilir (/api/v1/auth/key), bakiye sorgulayabilir ve GPT-4o, Claude 3.5, DeepSeek modellerini tek tıkla kullanabilirsiniz.
 """
     },
     "sekmeler_gezgini": {

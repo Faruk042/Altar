@@ -46,12 +46,18 @@ Altar; yapay zeka iletişimi, profesyonel Python IDE geliştirme ortamı, 5-katm
   * `MEMORY_SEARCH:::<kelime>` : Önceki konuşmalarda vektör araması yapar.
   * `REPO_CLONE:::<url>` : GitHub reposunu salt-okunur inceler.
 * **Oturum Yönetimi:** Sol alttaki `Oturumlar` butonuyla eski sohbetleri yükleyin, yeniden adlandırın veya silin.
+* **Asenkron Mesaj Kuyruğu (FIFO):** Yapay zeka modeli bir yanıt üretirken yeni bir mesaj yazdığınızda arayüz işlemi kesmez; ileti `⏳ Kuyruk: X mesaj beklemede` göstergesiyle sıraya alınır ve model yanıtı tamamladığında sırayla işlenir.
+* **Akıllı Otomatik Kaydırma Anahtarı (`📜 Oto Kaydır`):** Sohbet kutusunun hemen üzerindeki toggle switch. Açıkken yeni mesajlar geldikçe sayfayı otomatik alta kaydırır; kapalıyken geçmiş mesajları ve kodları incelerken sayfa konumunuzu sabit tutar.
+* **OpenRouter Canlı API Yöneticisi:** `sk-or-v1-...` anahtarlarını arayüzden canlı doğrulama (`/api/v1/auth/key`), hesap bakiyesi sorgulama, GPT-4o, Claude 3.5 Sonnet, DeepSeek ve Llama modellerini tek tıkla aktif etme ve `.env` dosyasıyla otomatik çift yönlü senkronizasyon.
 
 ---
 
 ### 3. Siber Güvenlik, Ağ IPS & Canlı Ağ Radarı
 * **Ağ IPS Güvenlik Duvarı:** Uygulama açılışında otomatik olarak devreye girer. Şüpheli paketleri ve bağlantı noktalarını gerçek zamanlı denetler.
-* **Canlı Ağ Radarı (Salt-Okunur):** Üst bardaki `🌐 Ağ Radarı` butonuna tıklayarak açılır. Aktif TCP/UDP bağlantılarını, dinleyen portları ve PID bilgilerini listeler.
+* **İnteraktif 2D Siber Ağ Radarı (`altar_ag_radari.py`):** Üst bardaki `🌐 Ağ Radarı` butonuna tıklayarak açılır. 360° döner sonar süpürme çizgisi, konsantrik mesafe halkaları ve ağdaki cihazları temsil eden parlayan hedeflerle çalışır.
+* **Cihaz Ayrıntı Paneli (Inspector):** Radarda tespit edilen herhangi bir hedefe tıklandığında IP adresi, MAC adresi, Cihaz Üreticisi (Vendor OUI), gecikme (ping) süresi ve güvenlik durumunu anlık gösterir.
+* **Davetsiz Misafir / İhlal Uyarısı (Intruder Alert):** Ağda ilk defa tespit edilen yabancı/şüpheli bir MAC adresi veya cihaz algılandığında anlık kırmızı flaş ve sesli sinyal uyarısı verir.
+* **Zararsız & Pasif Tarama:** Sisteme veya yerel ağa zarar vermemesi için Windows'un yerel `arp -a` önbelleğini ve düşük gecikmeli ICMP paketlerini pasif olarak okur.
 * **Karantina Kasası:** Şüpheli dosyaları AES-GCM ile `.altar_karantina` dizininde izole eder.
 
 ---
@@ -136,6 +142,7 @@ Altar; yapay zeka iletişimi, profesyonel Python IDE geliştirme ortamı, 5-katm
 | **F5** | Python IDE Kodunu Canlı Terminalde Çalıştır |
 | **Enter** | Sohbet Mesajını Yapay Zekaya Gönder |
 | **Shift + Enter** | Mesaj Kutusunda Yeni Satıra Geç |
+| **Ctrl + Tab** | Donanım Kilidi: Klavye ve Fare Girişlerini Anında Kilitle / Çöz |
 
 ---
 

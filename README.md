@@ -3,7 +3,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
 [![UI: CustomTkinter](https://img.shields.io/badge/UI-CustomTkinter%20%26%20PyQt6-blueviolet.svg)](https://github.com/TomSchimansky/CustomTkinter)
-[![AI Engine: Ollama & Gemini](https://img.shields.io/badge/AI%20Engine-Ollama%20(Offline)%20%26%20Gemini-orange.svg)](https://ollama.ai/)
+[![AI Engine: Ollama, Gemini & OpenRouter](https://img.shields.io/badge/AI%20Engine-Ollama%20%7C%20Gemini%20%7C%20OpenRouter-orange.svg)](https://openrouter.ai/)
 [![Security: 5--Layer EDR](https://img.shields.io/badge/Security-5--Layer%20EDR%20%26%20IPS-red.svg)](https://github.com/Faruk042/Altar)
 
 **ALTAR**; yapay zeka iletişimi, profesyonel Python IDE geliştirme ortamı, 5-katmanlı proaktif siber güvenlik kalkanları, tersine mühendislik araçları, endüstriyel CNC takım yolu ve katı model simülasyonu ile NASA mikroçekim uzay telemetri laboratuvarını tek çatı altında birleştiren yüksek performanslı, **%100 çevrimdışı çalışabilen hibrit bir masaüstü mühendislik platformudur**.
@@ -25,6 +25,8 @@ Uygulama başlatıldığında tüm alt modülleri, yapay zeka durumunu ve donan�
 * **Hibrit Motor Seçimi:** Tek tıkla **Yerel (Ollama)** veya **Bulut (API)** motorları arasında geçiş yapabilirsiniz.
 * **Dinamik Model ve Profil:** Çevrimdışı çalışırken `qwen3.5:9b`, `deepseek-r1`, `llama3`; bulutta ise `gemini-2.5/3.0` sürümleri seçilebilir. Seçilen uzmanlık profiline (*Sohbet*, *Yazılım / Kodlama*, *Siber Güvenlik*, *CNC G-Code*, *Ağ Operasyon*) göre yapay zekanın sistem talimatı otomatik olarak optimize edilir.
 * **Akıllı VRAM Tasarrufu:** `🔴 Yapay Zeka: Kapalı` butonuyla yapay zeka modeli bellekten tamamen tahliye edilerek dizüstü bilgisayarlarda pil tüketimi %70 azaltılır.
+* **Donanım Kilit Motoru (`Ctrl + Tab`):** Bilgisayar başından kısa süreli ayrılmalarda klavye ve fare girişlerini anında kilitleyip yetkisiz erişimi önleyen, 0.35s gecikme (debouncing) filtreli donanım güvenlik kalkanı ve sesli bildirimler (`winsound`).
+* **2 Sütunlu Kompakt Eylem Izgarası:** 13+ yardımcı araca (Kamera, Ses, Video, Canva, Oyun, Modeller vb.) hızlı erişim sağlayan ferahlatılmış ve optimize edilmiş menü yerleşimi.
 
 ---
 
@@ -41,6 +43,9 @@ Vektörel hafıza (ChromaDB RAG), çoklu dosya besleme ve otonom araç çağırm
   * `SEARCH:::<sorgu>` : Web üzerinde araştırma yapıp sonuçları özetler.
   * `NASA_SEARCH:::<konu>` : NASA NTRS bilimsel arşivinde araştırma yapar.
   * `MEMORY_SEARCH:::<kelime>` : Geçmiş sohbet oturumlarında vektörel tarama yapar.
+* ⏳ **Asenkron Mesaj Kuyruğu (FIFO):** Yapay zeka modeli yanıt üretirken yeni bir mesaj yazdığınızda iletiniz iptal edilmez veya kaybolmaz; `⏳ Kuyruk: X mesaj beklemede` sayacıyla sıraya alınır ve mevcut yanıt tamamlandığı an sıradaki mesaj modele otomatik iletilir.
+* 📜 **Akıllı Otomatik Kaydırma Anahtarı (`📜 Oto Kaydır`):** Sohbet alanının hemen üzerinde yer alan açma/kapama switch'i. Açıkken yeni cevaplar üretildikçe sayfayı otomatik en alta kaydırır; kapalıyken geçmiş mesajları ve kod bloklarını incelerken sayfa konumunu sabit tutarak okuma odağınızı korur.
+* 🔑 **OpenRouter Entegrasyonu & Canlı API Yöneticisi:** `sk-or-v1-...` anahtarlarını arayüzden tek tıkla canlı sunucu doğrulaması (`/api/v1/auth/key`), bakiye ve model seviyesi testi, programı yeniden başlatmadan GPT-4o, Claude 3.5 Sonnet, DeepSeek ve Llama modellerini aktif etme ve yerel `.env` dosyasıyla otomatik çift yönlü senkronizasyon.
 
 ---
 
@@ -108,12 +113,15 @@ Bilgisayarında Ollama veya yerel yapay zeka modeli yüklü olmayan kullanıcıl
 
 ---
 
-### 9. Siber Güvenlik, Ağ IPS & Canlı Ağ Radarı
-Sisteme gelen ve giden tüm ağ trafiğini dinleyen, şüpheli port bağlantılarını tespit eden gerçek zamanlı güvenlik modülüdür.
+### 9. Siber Güvenlik, Ağ IPS & Canlı 2D Siber Ağ Radarı
+Sisteme gelen ve giden tüm ağ trafiğini dinleyen, şüpheli port bağlantılarını tespit eden ve yerel ağı 2D siber arayüzle görselleştiren gerçek zamanlı güvenlik modülüdür.
 
 ![Siber Güvenlik ve Ağ Radarı](assets/readme_gorseller/09_guvenlik_ve_radar.png)
 
-* 🌐 **Canlı Ağ Radarı:** Aktif TCP/UDP bağlantılarını, yerel/uzak IP adreslerini ve PID işlemlerini anlık listeler.
+* 🌐 **İnteraktif 2D Siber Ağ Radarı (`altar_ag_radari.py`):** 360° sürekli dönen sonar süpürme çizgisi, konsantrik mesafe halkaları ve ağdaki cihazları temsil eden parlayan hedeflerle tam teşekküllü modern siber güvenlik radarı.
+* 🔍 **Cihaz Ayrıntı Paneli (Device Inspector):** Radarda tespit edilen herhangi bir hedefe tıklandığında IP adresi, MAC adresi, Tahmini Cihaz Üreticisi (Vendor OUI), gecikme (ping) süresi ve güvenlik durumunu anlık görüntüleme.
+* 🚨 **Davetsiz Misafir / İhlal Uyarısı (Intruder Alert):** Ağda ilk defa tespit edilen yabancı/şüpheli bir MAC adresi veya cihaz algılandığında anlık kırmızı flaş ve sesli sinyal uyarısı.
+* 🛡️ **Pasif & Zararsız Tarama:** Yerel `arp -a` önbelleğini ve düşük gecikmeli ICMP ping paketlerini pasif olarak okur; sisteme, ağa veya diske hiçbir zarar vermez.
 * 🛡️ **IPS Güvenlik Duvarı:** Bilinen şüpheli sunuculara ve botnet adreslerine giden istekleri gerçek zamanlı engeller.
 * ⚠️ **Zararlı Port Taraması:** Dinleyen şüpheli portları (ör. 4444, 1337, 8888) tespit ederek kullanıcıyı uyarır.
 
@@ -259,9 +267,10 @@ Altar'ı internet olmadan %100 çevrimdışı çalıştırmak için:
 *(Alternatif olarak Altar açılışında 'Ollama Kurucu' butonuna basarak tek tıkla otomatik kurdurabilirsiniz).*
 
 ### 5. Bulut API Yapılandırması (İsteğe Bağlı)
-Google Gemini modellerini buluttan kullanmak isterseniz, proje kök dizininde `.env` dosyası oluşturup anahtarınızı ekleyin:
+Altar bulut modellerini (Google Gemini veya OpenRouter - GPT-4o, Claude 3.5, DeepSeek) kullanmak isterseniz, anahtarınızı Altar arayüzündeki **`OpenRouter API Anahtarı Tanımla`** penceresinden tek tıkla canlı doğrulayabilir veya proje kök dizinindeki `.env` dosyasına ekleyebilirsiniz:
 ```env
-GEMINI_API_KEY="your_api_key_here"
+GEMINI_API_KEY="your_gemini_api_key_here"
+OPENROUTER_API_KEY="sk-or-v1-your_openrouter_key_here"
 ```
 
 ### 6. Uygulamayı Başlatma
