@@ -947,6 +947,10 @@ class AltarApiKeyWindow(ctk.CTkToplevel):
             mevcut_key = self.parent.api_engine.api_key
         if not mevcut_key:
             for _p in [
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
+                r"c:\Users\Burak\Desktop\Dosyalama_Projesi_Guncel\.env",
+                r"c:\Users\Burak\Desktop\Dosyalama_Projesi_Guncel\dist\Altar\.env",
+                r"c:\Users\Burak\Desktop\Dosyalama_Projesi_Guncel\dist\Altar\_internal\.env",
                 r"e:\Gemini API\Dosyalama_Projesi_Guncel\.env",
                 r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\.env",
                 r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\_internal\.env",
@@ -1047,6 +1051,10 @@ class AltarApiKeyWindow(ctk.CTkToplevel):
 
     def _anahtari_envye_yaz(self, anahtar: str):
         hedefler = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
+            r"c:\Users\Burak\Desktop\Dosyalama_Projesi_Guncel\.env",
+            r"c:\Users\Burak\Desktop\Dosyalama_Projesi_Guncel\dist\Altar\.env",
+            r"c:\Users\Burak\Desktop\Dosyalama_Projesi_Guncel\dist\Altar\_internal\.env",
             r"e:\Gemini API\Dosyalama_Projesi_Guncel\.env",
             r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\.env",
             r"e:\Gemini API\Dosyalama_Projesi_Guncel\dist\Altar\_internal\.env",
