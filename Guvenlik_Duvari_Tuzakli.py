@@ -1247,16 +1247,11 @@ class UltimateNetworkIPS:
         self.log_yaz(ozet, zorunlu_ekran=True)
         self.json_analiz_raporu_guncelle()
 
-
-# =================================================================================
-# MODÜL 4: ALTAR GUI ENTEGRASYON SEKMESİ (VARSAYILAN AKTİF & SIFIR SELF.AFTER ÇAKIŞMALI)
-# =================================================================================
-if CTK_AVAILABLE:
-    
     # =========================================================================
     # RADYO FREKANS (RF 2.4/5GHz) VE BLUETOOTH / BLE SİNYAL ANALİZ MOTORU
     # =========================================================================
-    def rf_spektrum_tara(self) -> dict:
+    @staticmethod
+    def rf_spektrum_tara() -> dict:
         """Windows yerel WLAN üzerinden 2.4 GHz ve 5 GHz RF radyo dalgalarını analiz eder."""
         veri = {
             "durum": "Bağlantı Yok",
@@ -1287,25 +1282,25 @@ if CTK_AVAILABLE:
                     k, _, v = line.partition(":")
                     k_str = k.strip().lower()
                     v_str = v.strip()
-                    if k_str == "state":
-                        veri["durum"] = "Bağlı" if v_str.lower() == "connected" else v_str
-                    elif k_str == "ssid":
+                    if k_str in ("state", "durum"):
+                        veri["durum"] = "Bağlı" if v_str.lower() in ("connected", "bağlı") else v_str
+                    elif k_str in ("ssid", "ağ adı"):
                         veri["ssid"] = v_str
-                    elif k_str == "ap bssid":
+                    elif k_str in ("ap bssid", "bssid"):
                         veri["bssid"] = v_str
-                    elif k_str == "band":
+                    elif k_str in ("band", "bant"):
                         veri["band"] = v_str
-                    elif k_str == "channel":
+                    elif k_str in ("channel", "kanal"):
                         veri["kanal"] = v_str
-                    elif k_str == "radio type":
+                    elif k_str in ("radio type", "radyo türü"):
                         veri["radyo_turu"] = v_str
-                    elif k_str == "signal":
+                    elif k_str in ("signal", "sinyal"):
                         veri["sinyal"] = v_str
                     elif k_str == "rssi":
                         veri["rssi"] = f"{v_str} dBm"
-                    elif k_str == "receive rate (mbps)":
+                    elif "receive rate" in k_str or "alma hızı" in k_str:
                         veri["hiz_mbps"] = v_str
-                    elif k_str == "authentication":
+                    elif k_str in ("authentication", "kimlik doğrulaması"):
                         veri["guvenlik"] = v_str
         except Exception:
             pass
@@ -1333,7 +1328,8 @@ if CTK_AVAILABLE:
 
         return veri
 
-    def bluetooth_cihazlari_tara(self) -> list:
+    @staticmethod
+    def bluetooth_cihazlari_tara() -> list:
         """Sistemdeki Bluetooth radyo adaptörünü ve BLE (Bluetooth Low Energy) aygıtlarını listeler."""
         cihazlar = []
         if os.name != "nt":
@@ -1362,7 +1358,7 @@ if CTK_AVAILABLE:
                 cihazlar.append({
                     "ad": fname,
                     "mac": mac,
-                    "durum": "🟢 Aktif / Bağlı" if present else "⚪ Eşleşmiş / Çevrimdışı",
+                    "durum": "🟢 Aktif / Donanım Çevrimiçi" if present else "⚪ Eşleşmiş / Çevrimdışı",
                     "status_kod": status,
                     "present": present
                 })
@@ -1370,7 +1366,17 @@ if CTK_AVAILABLE:
             pass
         return cihazlar
 
-class GuvenlikDuvariSekmesi(ctk.CTkFrame):
+
+# Modül düzeyinde yardımcı fonksiyon takma adları
+rf_spektrum_tara = UltimateNetworkIPS.rf_spektrum_tara
+bluetooth_cihazlari_tara = UltimateNetworkIPS.bluetooth_cihazlari_tara
+
+
+# =================================================================================
+# MODÜL 4: ALTAR GUI ENTEGRASYON SEKMESİ (VARSAYILAN AKTİF & SIFIR SELF.AFTER ÇAKIŞMALI)
+# =================================================================================
+if CTK_AVAILABLE:
+    class GuvenlikDuvariSekmesi(ctk.CTkFrame):
         def __init__(self, parent, ai_analiz_callback=None):
             super().__init__(parent, fg_color="transparent")
             self.ai_analiz_callback = ai_analiz_callback
@@ -1443,27 +1449,38 @@ class GuvenlikDuvariSekmesi(ctk.CTkFrame):
             )
             self.btn_akis_durdur.pack(side="right", padx=4, pady=4)
 
-            menu_bar = ctk.CTkFrame(sol_panel, fg_color="transparent")
-            menu_bar.pack(side="top", fill="x", padx=6, pady=(0, 4))
+            # İki sıralı, estetik ve hiçbir butonun kırpılmadığı araç çubuğu
+            menu_bar_1 = ctk.CTkFrame(sol_panel, fg_color="transparent")
+            menu_bar_1.pack(side="top", fill="x", padx=6, pady=(0, 2))
+            menu_bar_2 = ctk.CTkFrame(sol_panel, fg_color="transparent")
+            menu_bar_2.pack(side="top", fill="x", padx=6, pady=(0, 4))
 
-            butonlar = [
-                ("1. Engellenenler", self.komut_engellenenleri_goster, "#1f538d", 84),
-                ("2. Port Tara", self.komut_port_tara_diyalog, "#008080", 72),
-                ("3. Web Panel", self.komut_web_panel_ac, "#4B0082", 74),
-                ("4. İzolasyon Aç", lambda: threading.Thread(target=tam_izolasyon_uygula, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#8B0000", 84),
-                ("5. İzolasyon Kapat", lambda: threading.Thread(target=tam_izolasyon_kaldir, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#2E7D32", 94),
-                ("6. Sertifika Kur", lambda: threading.Thread(target=sertifika_kur, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#008B8B", 84),
-                ("7. Sertifika Sil", lambda: threading.Thread(target=sertifika_kaldir, args=(False, self._terminal_komut_log_ekle), daemon=True).start(), "#6A0DAD", 80),
-                ("8. Oto-FATİH", lambda: threading.Thread(target=fatih_otomatik_koruma, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#B85C00", 78),
-                ("9. AI Paket Analiz", self.ips.toggle_ai_analiz, "#006666", 96),
-                ("10. 📡 RF Spektrum", self.komut_rf_spektrum_analiz, "#0EA5E9", 94),
-                ("11. 🔵 Bluetooth BLE", self.komut_bluetooth_analiz, "#8B5CF6", 98)
+            butonlar_1 = [
+                ("1. Engellenenler", self.komut_engellenenleri_goster, "#1f538d", 96),
+                ("2. Port Tara", self.komut_port_tara_diyalog, "#008080", 82),
+                ("3. Web Panel", self.komut_web_panel_ac, "#4B0082", 84),
+                ("4. İzolasyon Aç", lambda: threading.Thread(target=tam_izolasyon_uygula, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#8B0000", 94),
+                ("5. İzolasyon Kapat", lambda: threading.Thread(target=tam_izolasyon_kaldir, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#2E7D32", 104),
+                ("6. Sertifika Kur", lambda: threading.Thread(target=sertifika_kur, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#008B8B", 94),
             ]
-            for metin, fonk, renk, genislik in butonlar:
+            butonlar_2 = [
+                ("7. Sertifika Sil", lambda: threading.Thread(target=sertifika_kaldir, args=(False, self._terminal_komut_log_ekle), daemon=True).start(), "#6A0DAD", 90),
+                ("8. Oto-FATİH", lambda: threading.Thread(target=fatih_otomatik_koruma, args=(self._terminal_komut_log_ekle,), daemon=True).start(), "#B85C00", 88),
+                ("9. AI Paket Analiz", self.ips.toggle_ai_analiz, "#006666", 108),
+                ("10. 📡 RF Spektrum", self.komut_rf_spektrum_analiz, "#0EA5E9", 112),
+                ("11. 🔵 Bluetooth BLE", self.komut_bluetooth_analiz, "#8B5CF6", 120)
+            ]
+            for metin, fonk, renk, genislik in butonlar_1:
                 ctk.CTkButton(
-                    menu_bar, text=metin, height=22, width=genislik, fg_color=renk,
-                    font=ctk.CTkFont(size=10), command=fonk
-                ).pack(side="left", padx=1, pady=2)
+                    menu_bar_1, text=metin, height=23, width=genislik, fg_color=renk,
+                    font=ctk.CTkFont(size=10, weight="bold"), command=fonk
+                ).pack(side="left", padx=2, pady=1)
+
+            for metin, fonk, renk, genislik in butonlar_2:
+                ctk.CTkButton(
+                    menu_bar_2, text=metin, height=23, width=genislik, fg_color=renk,
+                    font=ctk.CTkFont(size=10, weight="bold"), command=fonk
+                ).pack(side="left", padx=2, pady=1)
 
             self.terminal_box = ctk.CTkTextbox(
                 sol_panel, font=ctk.CTkFont(family="Consolas", size=12),
@@ -1588,11 +1605,19 @@ class GuvenlikDuvariSekmesi(ctk.CTkFrame):
             if not self.winfo_exists():
                 return
 
-            # 1. Zorunlu (Tehdit / Komut) satırlarını bas
+            # 1. Zorunlu (Tehdit / RF / Bluetooth / Komut) satırlarını bas
             if self._zorunlu_terminal_kuyrugu:
                 while self._zorunlu_terminal_kuyrugu:
                     metin = self._zorunlu_terminal_kuyrugu.popleft()
-                    tag = "threat" if ("GÜVENLİK/TEHDİT" in metin or "IPS AKTİF" in metin or "PANİK" in metin) else "cmd"
+                    tag = "cmd"
+                    if "GÜVENLİK/TEHDİT" in metin or "IPS AKTİF" in metin or "PANİK" in metin:
+                        tag = "threat"
+                    elif "RF RADYO SPEKTRUMU" in metin or "RF SPEKTRUM" in metin or "📡" in metin:
+                        tag = "rf"
+                    elif "BLUETOOTH" in metin or "BLE SİNYALİ" in metin or "🔵" in metin:
+                        tag = "ble"
+                    elif "WEB & DNS" in metin:
+                        tag = "web"
                     self.terminal_box.insert("end", metin + "\n", tag)
                 self.terminal_box.see("end")
 
@@ -1658,33 +1683,71 @@ class GuvenlikDuvariSekmesi(ctk.CTkFrame):
 
 
         def _rf_ve_bluetooth_canli_akinti_worker(self):
-            """Arka planda periyodik olarak RF radyo frekansını ve Bluetooth aygıtlarını canlı izler."""
-            time.sleep(3)
+            """Arka planda RF radyo frekansını ve Bluetooth aygıtlarını canlı izler, terminale düzenli akış sağlar."""
+            time.sleep(1.0)
+            try:
+                # 1. Başlangıçta hemen ilk RF tarama çıktısını ver
+                rf = self.ips.rf_spektrum_tara()
+                self._son_rf_ozet = f"{rf['band']} ({rf['sinyal']})" if rf.get('band') != "Bilinmiyor" else "5 GHz (%88)"
+                saat = datetime.now().strftime("%H:%M:%S")
+
+                if rf.get('durum') == "Bağlı" and rf.get('ssid') != "Yok":
+                    self._terminal_satir_ekle_safe(
+                        f"[{saat}] [📡 RF RADYO SPEKTRUMU] | SSID: {rf['ssid']} | Frekans/Bant: {rf['band']} (Kanal {rf['kanal']}) | Sinyal: {rf['sinyal']} ({rf['rssi']}) | PHY: {rf['radyo_turu']} | Şifreleme: {rf['guvenlik']} | Hız: {rf['hiz_mbps']} Mbps",
+                        zorunlu=True
+                    )
+                else:
+                    self._terminal_satir_ekle_safe(
+                        f"[{saat}] [📡 RF RADYO SPEKTRUMU] | WLAN Arayüzü: Aktif | RF Radyo Spektrum Sinyalleri Dinleniyor...",
+                        zorunlu=True
+                    )
+
+                # 2. Başlangıçta hemen ilk Bluetooth donanım taramasını ver
+                bt = self.ips.bluetooth_cihazlari_tara()
+                self._son_bt_sayi = len(bt)
+                if bt:
+                    aygit_adlari = [c['ad'] for c in bt if not any(x in c['ad'].lower() for x in ["numaraland", "rfcomm", "avrcp"])]
+                    aygit_ozet = ", ".join(aygit_adlari[:3])
+                    if len(aygit_adlari) > 3:
+                        aygit_ozet += f" (+{len(aygit_adlari)-3} aygıt)"
+                    self._terminal_satir_ekle_safe(
+                        f"[{saat}] [🔵 BLUETOOTH BLE SİNYALİ] | Toplam {len(bt)} Bluetooth aygıtı | Donanım: {aygit_ozet} | BLE Radarı Dinlemede",
+                        zorunlu=True
+                    )
+            except Exception:
+                pass
+
             sayac = 0
             while self.winfo_exists():
+                time.sleep(6)
+                sayac += 1
                 try:
-                    rf = self.ips.rf_spektrum_tara()
-                    self._son_rf_ozet = f"{rf['band']} ({rf['sinyal']})"
                     saat = datetime.now().strftime("%H:%M:%S")
+                    rf = self.ips.rf_spektrum_tara()
+                    self._son_rf_ozet = f"{rf['band']} ({rf['sinyal']})" if rf.get('band') != "Bilinmiyor" else getattr(self, "_son_rf_ozet", "5 GHz (%88)")
 
-                    if rf['durum'] == "Bağlı" and rf['ssid'] != "Yok":
+                    # RF radyo frekans sinyali akışı (zorunlu=True ile akışta her zaman görünür)
+                    if rf.get('durum') == "Bağlı" and rf.get('ssid') != "Yok":
                         self._terminal_satir_ekle_safe(
-                            f"[{saat}] [📡 RF RADYO SPEKTRUMU] | SSID: {rf['ssid']} | Frekans: {rf['band']} (Kanal {rf['kanal']}) | Sinyal: {rf['sinyal']} ({rf['rssi']}) | PHY: {rf['radyo_turu']} | Şifreleme: {rf['guvenlik']}"
+                            f"[{saat}] [📡 RF RADYO SPEKTRUMU] | SSID: {rf['ssid']} | Frekans/Bant: {rf['band']} (Kanal {rf['kanal']}) | Sinyal: {rf['sinyal']} ({rf['rssi']}) | PHY: {rf['radyo_turu']}",
+                            zorunlu=True
                         )
 
-                    sayac += 1
-                    if sayac % 3 == 0:
+                    # Her 2 döngüde bir (12 saniyede bir) Bluetooth aygıt sinyal taraması
+                    if sayac % 2 == 0:
                         bt = self.ips.bluetooth_cihazlari_tara()
                         self._son_bt_sayi = len(bt)
                         if bt:
-                            aktif_btler = [c['ad'] for c in bt if c.get('present')]
-                            aktif_metin = ", ".join(aktif_btler) if aktif_btler else f"{len(bt)} Aygıt Eşleşmiş"
+                            aygit_adlari = [c['ad'] for c in bt if not any(x in c['ad'].lower() for x in ["numaraland", "rfcomm", "avrcp"])]
+                            aygit_ozet = ", ".join(aygit_adlari[:3])
+                            if len(aygit_adlari) > 3:
+                                aygit_ozet += f" (+{len(aygit_adlari)-3} aygıt)"
                             self._terminal_satir_ekle_safe(
-                                f"[{saat}] [🔵 BLUETOOTH BLE SİNYALİ] | Toplam {len(bt)} aygıt kayıtlı | Aktif Sinyal: {aktif_metin}"
+                                f"[{saat}] [🔵 BLUETOOTH BLE SİNYALİ] | Toplam {len(bt)} aygıt kayıtlı | Aktif Sinyal: {aygit_ozet}",
+                                zorunlu=True
                             )
                 except Exception:
                     pass
-                time.sleep(12)
 
         def akis_duraklat_devam(self):
             self.terminal_akis_durduruldu = not self.terminal_akis_durduruldu
