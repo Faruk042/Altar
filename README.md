@@ -122,6 +122,7 @@ Sisteme gelen ve giden tüm ağ trafiğini dinleyen, şüpheli port bağlantıla
 * 🔍 **Cihaz Ayrıntı Paneli (Device Inspector):** Radarda tespit edilen herhangi bir hedefe tıklandığında IP adresi, MAC adresi, Tahmini Cihaz Üreticisi (Vendor OUI), gecikme (ping) süresi ve güvenlik durumunu anlık görüntüleme.
 * 🚨 **Davetsiz Misafir / İhlal Uyarısı (Intruder Alert):** Ağda ilk defa tespit edilen yabancı/şüpheli bir MAC adresi veya cihaz algılandığında anlık kırmızı flaş ve sesli sinyal uyarısı.
 * 🛡️ **Pasif & Zararsız Tarama:** Yerel `arp -a` önbelleğini ve düşük gecikmeli ICMP ping paketlerini pasif olarak okur; sisteme, ağa veya diske hiçbir zarar vermez.
+* 📡 **Hibrit RF Spektrumu & Bluetooth/BLE Analizörü (`Guvenlik_Duvari_Tuzakli.py`):** Yalnızca giden internet IP paketlerini değil; ortamdaki 2.4 GHz ve 5 GHz RF radyo frekans dalgalarını (SSID, BSSID, kanal, RSSI dBm sinyal kalitesi, 802.11ax Wi-Fi 6E PHY) ve Bluetooth / BLE çevre aygıtlarını canlı olarak dinleyip PyCharm tarzı terminalde analiz eder.
 * 🛡️ **IPS Güvenlik Duvarı:** Bilinen şüpheli sunuculara ve botnet adreslerine giden istekleri gerçek zamanlı engeller.
 * ⚠️ **Zararlı Port Taraması:** Dinleyen şüpheli portları (ör. 4444, 1337, 8888) tespit ederek kullanıcıyı uyarır.
 
@@ -201,6 +202,12 @@ Sistemi fidye yazılımlarına (Ransomware), sıfır-gün tehditlerine, truva at
 * 🔌 **Otomatik USB Aşı & Flaş Bellek Kalkanı:** Bilgisayara takılan çıkarılabilir USB sürücüleri anında algılar; gizli sistem dosyalarını ve kısayol virüslerini (`.lnk`) listeler. Tek tıkla USB belleğe aşı uygulayarak (korumalı salt-okunur `autorun.inf` yapısı) zararlıların flaş bellek üzerinden yayılmasını kesin olarak engeller.
 * 🌐 **C2 (Komuta Kontrol) ve Dış Ağ Sızıntı Avcısı:** Aktif dış ağ soketlerini (ESTABLISHED) anlık tarayarak bilinen truva atı ve C2 portları (4444, 1337, 31337, 6667, 8888, 5555 vb.) ile eşleştirir. Şüpheli dış IP bağlantılarını ve ilişkili süreci listeler; tek tıkla Windows Güvenlik Duvarı'nda engelleme olanağı sunar.
 * 🔒 **Kritik Sistem Dosyası Bütünlük Kalkanı (File Integrity Monitor - FIM):** Windows `hosts` dosyasını (`C:\Windows\System32\drivers\etc\hosts`) ve DNS yapılandırmasını izler. Phishing veya güvenlik sitelerini saptıran zararlı yönlendirmeleri tespit eder; tek tıkla orijinal temiz Microsoft hosts şablonunu geri yükleme desteği sunar.
+* 📋 **Kripto & Pano Hırsızı Koruyucusu (Clipper Sentinel):** Kopyalanan Bitcoin (BTC), Ethereum (ETH), Tron (USDT), Solana ve IBAN adreslerini izler; arka plandaki clipper trojanlarının panoyu gizlice manipüle etmesini engeller.
+* 🪟 **Gizli Casus & Donanım Gözetleme Avcısı (Webcam & Mic Sentinel):** Windows resmi ConsentStore telemetrisini okuyarak kamerayı veya mikrofonu kullanan ya da en son erişim sağlayan tüm arka plan süreçlerini listeler.
+* 🍪 **Tarayıcı Oturum & Çerez Hırsızı Kalkanı (Infostealer Guard):** RedLine ve Lumma gibi zararlıların Chrome ve Edge tarayıcısının SQLite oturum çerezlerini (`Cookies`) ve şifrelerini (`Login Data`) çalma girişimlerini denetler.
+* 📜 **Windows Güvenlik Olay Günlüğü Analizörü (Mini-SIEM):** Windows System ve Security kütüklerindeki kritik olayları (Event 4625: Başarısız Oturum Açma, Event 7045: Yeni Servis, Event 1102: Log Temizleme) analiz ederek Türkçe güvenlik zaman tüneli çıkarır.
+* 🧹 **Askeri Standartta Güvenli Dosya İmha Motoru (DoD 5220.22-M):** Kullanıcının seçtiği tekil dosyayı 3 geçişli (0x00, 0xFF ve Kriptografik Rastgele Bayt) yöntemle kalıcı olarak yok eder. Sistem ve proje dizinlerini koruyan kesin engelleme kalkanı içerir; kullanıcının dosyalarını yanlışlıkla silme riski sıfırdır.
+* 🌐 **Wi-Fi & DNS Sahte Ağ Geçidi Dedektörü (ARP/DNS Spoofing Watcher):** Kafe, otel veya ortak kablosuz ağlarda ARP zehirlemesi (Man-in-the-Middle) ve sahte DNS saptırmalarını denetler.
 
 ---
 

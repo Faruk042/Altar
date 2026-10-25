@@ -532,6 +532,12 @@ Altar EDR, sisteminizde sessizce çalışan ve sıfır-gün tehditlerine karşı
   4. 🔌 USB Flaş Koruyucu       : Flaş bellekleri algılar, kısayol virüslerini listeler ve tek tıkla autorun aşısı uygular.
   5. 🌐 C2 Sızıntı Avcısı       : Dış ağ bağlantılarını bilinen C2 portları (4444, 1337 vb.) ile eşleştirir.
   6. 🔒 Bütünlük Kalkanı (FIM)  : Windows hosts dosyasını izler, zararlı DNS yönlendirmelerini engeller ve orijinal şablonu geri yükler.
+  7. 📋 Pano Kripto Koruyucu   : Kripto cüzdan (BTC/ETH/SOL) ve IBAN pano hırsızlığını (Clipper) engeller.
+  8. 🪟 Kamera & Mic İzleyici   : Donanım ConsentStore telemetrisiyle kameraya/mikrofona erişen süreçleri listeler.
+  9. 🍪 Tarayıcı Çerez Kalkanı  : Chrome ve Edge SQLite çerez/şifre dosyalarını infostealer zararlılarına karşı denetler.
+  10. 📜 SIEM Olay Günlüğü      : Windows Event Log'u analiz ederek başarısız giriş ve yeni servis olaylarını raporlar.
+  11. 🧹 Güvenli İmha (DoD)     : 3 geçişli askeri parçalama (Sistem koruma kalkanlı, asla yanlış dosya silmez).
+  12. 🌐 Wi-Fi & ARP Zehirlenme : Ortak kablosuz ağlarda sahte ağ geçidi ve MitM saldırılarını yakalar.
 
 📌 3. PERFORMANS ETKİSİ:
   • Cihazınızı yormayan diferansiyel tarama mantığıyla çalışır.

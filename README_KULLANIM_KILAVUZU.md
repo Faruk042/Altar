@@ -55,6 +55,7 @@ Altar; yapay zeka iletişimi, profesyonel Python IDE geliştirme ortamı, 5-katm
 ### 3. Siber Güvenlik, Ağ IPS & Canlı Ağ Radarı
 * **Ağ IPS Güvenlik Duvarı:** Uygulama açılışında otomatik olarak devreye girer. Şüpheli paketleri ve bağlantı noktalarını gerçek zamanlı denetler.
 * **İnteraktif 2D Siber Ağ Radarı (`altar_ag_radari.py`):** Üst bardaki `🌐 Ağ Radarı` butonuna tıklayarak açılır. 360° döner sonar süpürme çizgisi, konsantrik mesafe halkaları ve ağdaki cihazları temsil eden parlayan hedeflerle çalışır.
+* **Hibrit RF Spektrumu & Bluetooth/BLE Radarı (`Guvenlik_Duvari_Tuzakli.py`):** İnternet IP paketlerinin yanı sıra 2.4/5GHz Wi-Fi radyo dalgalarını (SSID, BSSID, Kanal, RSSI dBm, Wi-Fi 6E) ve yakındaki Bluetooth aygıtlarını PyCharm konsolunda canlı analiz eder.
 * **Cihaz Ayrıntı Paneli (Inspector):** Radarda tespit edilen herhangi bir hedefe tıklandığında IP adresi, MAC adresi, Cihaz Üreticisi (Vendor OUI), gecikme (ping) süresi ve güvenlik durumunu anlık gösterir.
 * **Davetsiz Misafir / İhlal Uyarısı (Intruder Alert):** Ağda ilk defa tespit edilen yabancı/şüpheli bir MAC adresi veya cihaz algılandığında anlık kırmızı flaş ve sesli sinyal uyarısı verir.
 * **Zararsız & Pasif Tarama:** Sisteme veya yerel ağa zarar vermemesi için Windows'un yerel `arp -a` önbelleğini ve düşük gecikmeli ICMP paketlerini pasif olarak okur.
@@ -113,6 +114,12 @@ Altar; yapay zeka iletişimi, profesyonel Python IDE geliştirme ortamı, 5-katm
   4. 🔌 **USB Aşı & Flaş Bellek Koruyucusu:** Takılan USB bellekleri algılar, kısayol virüslerini (`.lnk`) listeler ve tek tıkla aşı uygulayarak (`autorun.inf` koruma klasörü) bulaşmaları önler.
   5. 🌐 **C2 Sızıntı & Dış Port Avcısı:** Aktif dış bağlantıları bilinen truva atı / C2 portlarıyla (4444, 1337, 31337 vb.) karşılaştırır ve şüpheli soketleri listeler.
   6. 🔒 **Bütünlük Kalkanı (Hosts & FIM):** Windows `hosts` dosyasını ve DNS yönlendirmelerini denetler; saptırmaları tespit eder ve tek tıkla temiz Microsoft hosts şablonuna döndürür.
+  7. 📋 **Pano Kripto Koruyucusu (Clipper Sentinel):** Kopyalanan kripto cüzdan ve IBAN adreslerinin arka planda değiştirilmesini engeller.
+  8. 🪟 **Webcam & Mic Casus İzleyici:** Kameraya veya mikrofona erişen süreçleri anlık listeler.
+  9. 🍪 **Tarayıcı Çerez Kalkanı:** Chrome/Edge çerez ve şifre veritabanlarına yetkisiz erişimleri denetler.
+  10. 📜 **SIEM Olay Günlüğü:** Windows Security loglarından kaba kuvvet ve iz silme eylemlerini listeler.
+  11. 🧹 **Güvenli Dosya İmha (DoD 5220.22-M):** Seçilen tekil dosyayı 3 geçişli askeri standartta parçalar (Sistem kalkanı korumalı).
+  12. 🌐 **Wi-Fi & ARP Zehirleme Dedektörü:** Ortak ağlardaki sahte ağ geçitlerini ve Man-in-the-Middle saldırılarını tespit eder.
 
 ---
 

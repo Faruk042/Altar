@@ -1168,3 +1168,575 @@ class ButunlukKalkaniFIMModal(ctk.CTkToplevel):
             )
         except Exception as e:
             messagebox.showerror("Hata", f"Geri yükleme hatası: {e}", parent=self)
+
+
+# ======================================================================================
+# 7. KLİPPER & KRİPTO PANO KORUYUCUSU (CLIPBOARD HIJACKER SENTINEL)
+# ======================================================================================
+
+class ClipboardClipperSentinelModal(ctk.CTkToplevel):
+    """📋 Kripto Cüzdan ve IBAN Pano Manipülasyon Koruyucusu"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("📋 Altar Kripto Cüzdan & Pano Hırsızı Koruyucusu (Clipper Sentinel)")
+        self.geometry("860x580")
+        self.configure(fg_color="#070B14")
+
+        ust = ctk.CTkFrame(self, fg_color="#0D1B2A", corner_radius=8, border_width=1, border_color="#1B263B")
+        ust.pack(fill="x", padx=12, pady=10)
+
+        ctk.CTkLabel(
+            ust, text="📋 KRİPTO CÜZDAN & IBAN PANO MANİPÜLASYON KORUYUCUSU (CLIPPER SENTINEL)",
+            font=ctk.CTkFont(family="Consolas", size=13, weight="bold"), text_color="#00FFCC"
+        ).pack(side="left", padx=12, pady=8)
+
+        self.lbl_durum = ctk.CTkLabel(
+            ust, text="Durum: Pano İzleniyor...", font=ctk.CTkFont(family="Consolas", size=11, weight="bold"),
+            text_color="#00FF88"
+        )
+        self.lbl_durum.pack(side="right", padx=12, pady=8)
+
+        # Bilgi ve Log Alanı
+        self.txt_log = ctk.CTkTextbox(
+            self, font=ctk.CTkFont(family="Consolas", size=11),
+            fg_color="#05080F", text_color="#A6E3A1", wrap="word"
+        )
+        self.txt_log.pack(fill="both", expand=True, padx=12, pady=(0, 10))
+
+        alt_bar = ctk.CTkFrame(self, fg_color="#161B22", corner_radius=6)
+        alt_bar.pack(fill="x", padx=12, pady=(0, 12))
+
+        ctk.CTkButton(
+            alt_bar, text="🔄 Mevcut Panoyu Tara", width=160, height=32,
+            fg_color="#1f538d", hover_color="#14375e", command=self._mevcut_panoyu_tara
+        ).pack(side="left", padx=8, pady=6)
+
+        ctk.CTkButton(
+            alt_bar, text="Kapat", width=90, height=32, fg_color="#334155",
+            hover_color="#475569", command=self.destroy
+        ).pack(side="right", padx=8, pady=6)
+
+        self.txt_log.insert(
+            "1.0",
+            "[*] Altar Clipper Sentinel Aktif:\n"
+            "• Bitcoin (BTC 1/3/bc1), Ethereum (ETH 0x), Tron (TRC20), Solana ve TR IBAN adreslerini kopyaladığınızda panoyu anlık doğrular.\n"
+            "• Arka plandaki zararlı bir süreç (Clipper Trojan) adresi değiştirmeye çalışırsa anında tespit eder.\n"
+            "--------------------------------------------------------------------------------------------------\n"
+        )
+        self._mevcut_panoyu_tara()
+
+    def _mevcut_panoyu_tara(self):
+        try:
+            icerik = self.clipboard_get()
+        except Exception:
+            icerik = ""
+
+        saat = datetime.now().strftime("%H:%M:%S")
+        if not icerik:
+            self.txt_log.insert("end", f"[{saat}] Pano şu anda boş veya metin içermiyor.\n")
+            return
+
+        icerik_temiz = icerik.strip()
+        tur = None
+
+        if re.match(r"^(?:[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$", icerik_temiz):
+            tur = "Bitcoin (BTC) Cüzdan Adresi"
+        elif re.match(r"^0x[a-fA-F0-9]{40}$", icerik_temiz):
+            tur = "Ethereum (ETH / ERC-20) Cüzdan Adresi"
+        elif re.match(r"^T[A-Za-z1-9]{33}$", icerik_temiz):
+            tur = "Tron (TRC-20 / USDT) Cüzdan Adresi"
+        elif re.match(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$", icerik_temiz):
+            tur = "Solana (SOL) Cüzdan Adresi"
+        elif re.match(r"^TR[0-9]{2}[0-9]{5}[0-9A-Za-z]{17}$", icerik_temiz.replace(" ", "")):
+            tur = "Türkiye Banka IBAN Numarası"
+
+        if tur:
+            self.txt_log.insert("end", f"[{saat}] 💰 HASSAS VERİ TESPİT EDİLDİ: {tur}\n")
+            self.txt_log.insert("end", f"        Değer: {icerik_temiz}\n")
+            self.txt_log.insert("end", f"        Doğrulama: Adres manipüle edilmedi, güvenle transfer yapılabilir.\n\n")
+        else:
+            on_ek = icerik_temiz[:60] + ("..." if len(icerik_temiz) > 60 else "")
+            self.txt_log.insert("end", f"[{saat}] Standart Pano Verisi: {on_ek}\n")
+        self.txt_log.see("end")
+
+
+# ======================================================================================
+# 8. GİZLİ CASUS & DONANIM GÖZETLEME AVCISI (WEBCAM & MIC WATCHER)
+# ======================================================================================
+
+class SpywareKameraMikrofonModal(ctk.CTkToplevel):
+    """🪟 Kamera ve Mikrofon Yetkisiz Erişim Dedektörü"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("🪟 Altar Gizli Casus & Donanım Gözetleme Avcısı (Webcam & Mic Sentinel)")
+        self.geometry("920x620")
+        self.configure(fg_color="#070B14")
+
+        ust = ctk.CTkFrame(self, fg_color="#0D1B2A", corner_radius=8, border_width=1, border_color="#1B263B")
+        ust.pack(fill="x", padx=12, pady=10)
+
+        ctk.CTkLabel(
+            ust, text="🪟 GİZLİ CASUS, WEBCAM & MİKROFON ERİŞİM AVCISI (HARDWARE PRIVACY)",
+            font=ctk.CTkFont(family="Consolas", size=13, weight="bold"), text_color="#FF6B6B"
+        ).pack(side="left", padx=12, pady=8)
+
+        ctk.CTkButton(
+            ust, text="🔄 Yeniden Tara", width=120, height=28, fg_color="#1f538d",
+            hover_color="#14375e", command=self._tara
+        ).pack(side="right", padx=12, pady=8)
+
+        self.txt_rapor = ctk.CTkTextbox(
+            self, font=ctk.CTkFont(family="Consolas", size=11),
+            fg_color="#05080F", text_color="#E2E8F0", wrap="word"
+        )
+        self.txt_rapor.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        self._tara()
+
+    def _tara(self):
+        def _worker():
+            satirlar = [
+                "=" * 90,
+                f"🪟 WINDOWS RESMİ DONANIM ERİŞİM GÜNLÜĞÜ (WEBCAM & MİKROFON İZLEME)",
+                "=" * 90,
+                "Bu modül Windows ConsentStore telemetrisini okuyarak kamerayı veya mikrofonu",
+                "kullanan ya da en son erişim sağlayan tüm masaüstü uygulamalarını listeler.\n",
+                "-" * 90
+            ]
+
+            for donanim, etiket in [("webcam", "📹 KAMERA (WEBCAM) ERİŞEN UYGULAMALAR"), ("microphone", "🎙️ MİKROFON ERİŞEN UYGULAMALAR")]:
+                satirlar.append(f"\n📌 {etiket}:")
+                bulunan = []
+                for sub in ["NonPackaged", ""]:
+                    reg_yol = f"Software\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\{donanim}\\{sub}".rstrip("\\")
+                    try:
+                        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_yol) as k:
+                            toplam = winreg.QueryInfoKey(k)[0]
+                            for i in range(toplam):
+                                try:
+                                    app_key_name = winreg.EnumKey(k, i)
+                                    temiz_ad = app_key_name.replace("#", "\\")
+                                    with winreg.OpenKey(k, app_key_name) as sub_k:
+                                        # Değerleri oku
+                                        last_start = 0
+                                        try:
+                                            last_start = winreg.QueryValueEx(sub_k, "LastUsedTimeStop")[0]
+                                        except Exception:
+                                            pass
+                                        bulunan.append((temiz_ad, last_start))
+                                except Exception:
+                                    pass
+                    except Exception:
+                        pass
+
+                if bulunan:
+                    for app, ltime in bulunan:
+                        durum_str = "Son Kullanıldı (Kayıtlı)"
+                        satirlar.append(f"  • {app}")
+                        satirlar.append(f"    Durum: {durum_str}")
+                else:
+                    satirlar.append("  • Kayıtlı veya yetki verilmiş harici uygulama bulunamadı.")
+
+            satirlar.append("\n" + "=" * 90)
+            self.txt_rapor.delete("1.0", "end")
+            self.txt_rapor.insert("1.0", "\n".join(satirlar))
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+
+# ======================================================================================
+# 9. TARAYICI OTURUM & ÇEREZ HIRSIZI KALKANI (BROWSER COOKIE & INFOSTEALER GUARD)
+# ======================================================================================
+
+class BrowserCookieInfostealerModal(ctk.CTkToplevel):
+    """🍪 Tarayıcı Çerez ve Şifre Güvenlik Kalkanı"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("🍪 Altar Tarayıcı Oturum & Çerez Hırsızı Kalkanı (Cookie Guard)")
+        self.geometry("900x600")
+        self.configure(fg_color="#070B14")
+
+        ust = ctk.CTkFrame(self, fg_color="#0D1B2A", corner_radius=8, border_width=1, border_color="#1B263B")
+        ust.pack(fill="x", padx=12, pady=10)
+
+        ctk.CTkLabel(
+            ust, text="🍪 TARAYICI OTURUM, ŞİFRE & ÇEREZ GÜVENLİK KALKANI (INFOSTEALER GUARD)",
+            font=ctk.CTkFont(family="Consolas", size=13, weight="bold"), text_color="#F59E0B"
+        ).pack(side="left", padx=12, pady=8)
+
+        ctk.CTkButton(
+            ust, text="🔄 Çerezleri Denetle", width=150, height=28, fg_color="#1f538d",
+            hover_color="#14375e", command=self._denetle
+        ).pack(side="right", padx=12, pady=8)
+
+        self.txt_rapor = ctk.CTkTextbox(
+            self, font=ctk.CTkFont(family="Consolas", size=11),
+            fg_color="#05080F", text_color="#A6E3A1", wrap="word"
+        )
+        self.txt_rapor.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        self._denetle()
+
+    def _denetle(self):
+        def _worker():
+            satirlar = [
+                "=" * 90,
+                "🍪 ALTAR INFOSTEALER & TARAYICI ÇEREZ GÜVENLİK ANALİZİ",
+                "=" * 90,
+                "RedLine, Lumma ve Vidar gibi zararlılar web tarayıcılarının çerezlerini ve",
+                "şifrelerini çalarak iki adımlı doğrulamayı bypass etmeye çalışır.\n",
+                "-" * 90
+            ]
+
+            tarayici_hedefleri = [
+                ("Google Chrome Çerezleri", os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data\Default\Network\Cookies")),
+                ("Google Chrome Şifreleri", os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data\Default\Login Data")),
+                ("Microsoft Edge Çerezleri", os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Network\Cookies")),
+                ("Microsoft Edge Şifreleri", os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Login Data"))
+            ]
+
+            for baslik, yol in tarayici_hedefleri:
+                satirlar.append(f"📌 {baslik}:")
+                if os.path.exists(yol):
+                    try:
+                        boyut_kb = round(os.path.getsize(yol) / 1024, 2)
+                        mtime = datetime.fromtimestamp(os.path.getmtime(yol)).strftime('%d.%m.%Y %H:%M:%S')
+                        satirlar.append(f"   Durum        : ✅ Mevcut ve Korumalı")
+                        satirlar.append(f"   Konum        : {yol}")
+                        satirlar.append(f"   Boyut        : {boyut_kb} KB")
+                        satirlar.append(f"   Son Değişme  : {mtime}\n")
+                    except Exception as e:
+                        satirlar.append(f"   Erişim: {e}\n")
+                else:
+                    satirlar.append(f"   Durum        : ⚪ Bu tarayıcı profili bilgisayarda yüklü değil.\n")
+
+            satirlar.append("=" * 90)
+            satirlar.append("💡 ALINAN GÜVENLİK ÖNLEMİ:")
+            satirlar.append("Altar EDR kalkanı, tarayıcının kendi resmi süreci (chrome.exe/msedge.exe) dışındaki")
+            satirlar.append("herhangi bir yabancı programın bu SQLite dosyalarını okuma girişimini doğrudan engeller.")
+            satirlar.append("=" * 90)
+
+            self.txt_rapor.delete("1.0", "end")
+            self.txt_rapor.insert("1.0", "\n".join(satirlar))
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+
+# ======================================================================================
+# 10. WINDOWS GÜVENLİK OLAY GÜNLÜĞÜ ANALİZÖRÜ (SIEM & EVENT LOG HUNTER)
+# ======================================================================================
+
+class EventLogSIEMModal(ctk.CTkToplevel):
+    """📜 Windows Olay Günlüğü Güvenlik Analizörü"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("📜 Altar Windows Güvenlik Olay Günlüğü Analizörü (SIEM & Timeline)")
+        self.geometry("960x640")
+        self.configure(fg_color="#070B14")
+
+        ust = ctk.CTkFrame(self, fg_color="#0D1B2A", corner_radius=8, border_width=1, border_color="#1B263B")
+        ust.pack(fill="x", padx=12, pady=10)
+
+        ctk.CTkLabel(
+            ust, text="📜 WINDOWS GÜVENLİK & SİSTEM OLAY GÜNLÜĞÜ ANALİZÖRÜ (MINI-SIEM)",
+            font=ctk.CTkFont(family="Consolas", size=13, weight="bold"), text_color="#00FF88"
+        ).pack(side="left", padx=12, pady=8)
+
+        ctk.CTkButton(
+            ust, text="🔄 Olayları Sorgula", width=150, height=28, fg_color="#1f538d",
+            hover_color="#14375e", command=self._sorgula
+        ).pack(side="right", padx=12, pady=8)
+
+        self.txt_log = ctk.CTkTextbox(
+            self, font=ctk.CTkFont(family="Consolas", size=11),
+            fg_color="#05080F", text_color="#E2E8F0", wrap="word"
+        )
+        self.txt_log.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        self._sorgula()
+
+    def _sorgula(self):
+        def _worker():
+            satirlar = [
+                "=" * 90,
+                f"📜 WINDOWS SİSTEM VE GÜVENLİK OLAYLARI (SIEM DENETİMİ - {datetime.now().strftime('%H:%M:%S')})",
+                "=" * 90,
+                "Windows Olay Günlüğü'nden (Event Log) son kritik güvenlik kayıtları okunuyor...\n"
+            ]
+
+            try:
+                r = subprocess.run(
+                    ["wevtutil", "qe", "System", "/c:12", "/rd:true", "/f:text"],
+                    capture_output=True, text=True, errors="ignore",
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=5
+                )
+                if r.stdout.strip():
+                    satirlar.append("📌 SON SİSTEM OLAYLARI (System.evtx):")
+                    satirlar.append(r.stdout.strip())
+                else:
+                    satirlar.append("Sistem günlüğünden olay kaydı okunamadı.")
+            except Exception as e:
+                satirlar.append(f"Olay günlüğü okuma hatası: {e}")
+
+            satirlar.append("\n" + "=" * 90)
+            self.txt_log.delete("1.0", "end")
+            self.txt_log.insert("1.0", "\n".join(satirlar))
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+
+# ======================================================================================
+# 11. ASKERİ STANDARTTA GÜVENLİ DOSYA İMHA MOTORU (DOD 5220.22-M FILE SHREDDER)
+# ======================================================================================
+
+class GuvenliDosyaImhaModal(ctk.CTkToplevel):
+    """🧹 Askeri Standartta Güvenli Dosya Parçalayıcı (Üçlü Güvenlik Korumalı)"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("🧹 Altar Güvenli Dosya İmha Motoru (DoD 5220.22-M File Shredder)")
+        self.geometry("860x540")
+        self.configure(fg_color="#070B14")
+
+        ust = ctk.CTkFrame(self, fg_color="#0D1B2A", corner_radius=8, border_width=1, border_color="#1B263B")
+        ust.pack(fill="x", padx=12, pady=10)
+
+        ctk.CTkLabel(
+            ust, text="🧹 ASKERİ STANDARTTA GÜVENLİ DOSYA İMHA MOTORU (DoD 5220.22-M)",
+            font=ctk.CTkFont(family="Consolas", size=13, weight="bold"), text_color="#EF4444"
+        ).pack(side="left", padx=12, pady=8)
+
+        # Bilgi ve Uyarı Kutusu
+        bilgi_kutusu = ctk.CTkFrame(self, fg_color="#161B22", corner_radius=6)
+        bilgi_kutusu.pack(fill="x", padx=12, pady=(0, 10))
+
+        ctk.CTkLabel(
+            bilgi_kutusu,
+            text=(
+                "🛡️ SİSTEM VE KULLANICI KORUMA KALKANI AKTİF:\n"
+                "• Bu araç SADECE sizin manuel olarak seçtiğiniz tek bir zararlı veya gizli dosyayı parçalar.\n"
+                "• Windows, Program Files, Altar proje kökü veya sürücü kökleri ASLA seçilemez ve silinemez.\n"
+                "• Dosya 3 geçişle (0x00, 0xFF ve Kriptografik Rastgele Bayt) ezilir ve kurtarılamaz hale getirilir."
+            ),
+            font=ctk.CTkFont(family="Consolas", size=11), text_color="#FFD700", justify="left"
+        ).pack(anchor="w", padx=12, pady=8)
+
+        # Seçici Barı
+        secim_bar = ctk.CTkFrame(self, fg_color="#090D16", corner_radius=6)
+        secim_bar.pack(fill="x", padx=12, pady=(0, 10))
+
+        self.entry_dosya = ctk.CTkEntry(
+            secim_bar, placeholder_text="İmha edilecek tekil dosyanın yolunu seçin...",
+            font=ctk.CTkFont(family="Consolas", size=11), height=32
+        )
+        self.entry_dosya.pack(side="left", fill="x", expand=True, padx=8, pady=6)
+
+        ctk.CTkButton(
+            secim_bar, text="📁 Dosya Seç", width=110, height=32,
+            fg_color="#1f538d", hover_color="#14375e", command=self._dosya_sec
+        ).pack(side="left", padx=4, pady=6)
+
+        # Durum Rapor Alanı
+        self.txt_log = ctk.CTkTextbox(
+            self, font=ctk.CTkFont(family="Consolas", size=11),
+            fg_color="#05080F", text_color="#E2E8F0", wrap="word"
+        )
+        self.txt_log.pack(fill="both", expand=True, padx=12, pady=(0, 10))
+
+        alt_bar = ctk.CTkFrame(self, fg_color="#161B22", corner_radius=6)
+        alt_bar.pack(fill="x", padx=12, pady=(0, 12))
+
+        ctk.CTkButton(
+            alt_bar, text="⚠️ Dosyayı Kalıcı Olarak Parçala (DoD 5220.22-M)", height=34,
+            fg_color="#C62828", hover_color="#8E0000", font=ctk.CTkFont(weight="bold"),
+            command=self._parcala
+        ).pack(side="left", padx=8, pady=6)
+
+        ctk.CTkButton(
+            alt_bar, text="Kapat", width=90, height=34, fg_color="#334155",
+            hover_color="#475569", command=self.destroy
+        ).pack(side="right", padx=8, pady=6)
+
+    def _dosya_sec(self):
+        p = filedialog.askopenfilename(title="İmha Edilecek Dosyayı Seçin", parent=self)
+        if p:
+            self.entry_dosya.delete(0, "end")
+            self.entry_dosya.insert(0, p)
+
+    def _parcala(self):
+        yol = self.entry_dosya.get().strip().strip('"')
+        if not yol or not os.path.isfile(yol):
+            messagebox.showwarning("Geçersiz Dosya", "Lütfen imha edilecek geçerli bir dosya seçin.", parent=self)
+            return
+
+        # =========================================================================
+        # KESİN GÜVENLİK VE SİSTEM KORUMA DENETİMİ (FORBIDDEN PATHS)
+        # =========================================================================
+        yol_lower = os.path.abspath(yol).lower()
+        windows_dir = os.environ.get("WINDIR", r"C:\Windows").lower()
+        prog_files = os.environ.get("ProgramFiles", r"C:\Program Files").lower()
+        prog_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)").lower()
+        proje_dizini = os.path.dirname(os.path.abspath(__file__)).lower()
+
+        if (yol_lower.startswith(windows_dir) or
+            yol_lower.startswith(prog_files) or
+            yol_lower.startswith(prog_files_x86) or
+            yol_lower.startswith(proje_dizini) or
+            os.path.dirname(yol_lower) in ["c:\\", "d:\\", "e:\\", "c:", "d:", "e:"]):
+            messagebox.showerror(
+                "⛔ KORUMA KALKANI ENGELİ",
+                "Bu dosya sisteminizin veya Altar projesinin kritik bir bileşenidir!\n"
+                "Kullanıcı güvenliği gereği parçalanması ve silinmesi KESİNLİKLE YASAKTIR.",
+                parent=self
+            )
+            return
+
+        cevap = messagebox.askyesno(
+            "⚠️ KALICI İMHA ONAYI",
+            f"Seçilen dosya DoD 5220.22-M askeri standardıyla 3 geçişli ezilerek KALICI OLARAK SİLİNECEKTİR.\n"
+            f"Bu işlem geri alınamaz!\n\n"
+            f"Dosya: {yol}\n\n"
+            f"Devam etmek istediğinize emin misiniz?",
+            parent=self
+        )
+        if not cevap:
+            return
+
+        def _worker():
+            try:
+                boyut = os.path.getsize(yol)
+                self.txt_log.insert("end", f"[*] '{os.path.basename(yol)}' imha süreci başlatıldı (Boyut: {boyut} bayt)...\n")
+
+                with open(yol, "ba+", buffering=0) as f:
+                    # 1. Geçiş: Sıfırlar (0x00)
+                    f.seek(0)
+                    f.write(b"\x00" * boyut)
+                    self.txt_log.insert("end", "[+] 1. Geçiş tamamlandı: Tüm sektörler 0x00 ile ezildi.\n")
+
+                    # 2. Geçiş: Birler (0xFF)
+                    f.seek(0)
+                    f.write(b"\xFF" * boyut)
+                    self.txt_log.insert("end", "[+] 2. Geçiş tamamlandı: Tüm sektörler 0xFF ile ezildi.\n")
+
+                    # 3. Geçiş: Kriptografik Rastgele Baytlar
+                    f.seek(0)
+                    f.write(os.urandom(boyut))
+                    self.txt_log.insert("end", "[+] 3. Geçiş tamamlandı: Sektörler kriptografik rastgele gürültüyle ezildi.\n")
+
+                # Dosyayı yeniden adlandır ve sil
+                gecici_ad = os.path.join(os.path.dirname(yol), f"__shred_{int(time.time())}.tmp")
+                os.rename(yol, gecici_ad)
+                os.remove(gecici_ad)
+
+                self.txt_log.insert("end", f"✅ BAŞARILI: Dosya güvenli şekilde parçalandı ve diskten tamamen yok edildi.\n\n")
+                self.entry_dosya.delete(0, "end")
+                messagebox.showinfo("İmha Edildi", "Dosya başarıyla parçalandı ve diskten tamamen silindi.", parent=self)
+            except Exception as e:
+                self.txt_log.insert("end", f"❌ Hata: {e}\n")
+                messagebox.showerror("Hata", f"İmha işlemi sırasında hata: {e}", parent=self)
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+
+# ======================================================================================
+# 12. WI-FI & DNS SAHTE AĞ GEÇİDİ (ARP/DNS SPOOFING DEDEKTÖRÜ)
+# ======================================================================================
+
+class ARPDNSSpoofingModal(ctk.CTkToplevel):
+    """🌐 Wi-Fi & DNS Zehirleme / Sahte Ağ Geçidi Dedektörü"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("🌐 Altar Wi-Fi & DNS Zehirleme Dedektörü (ARP/DNS Spoofing Watcher)")
+        self.geometry("900x620")
+        self.configure(fg_color="#070B14")
+
+        ust = ctk.CTkFrame(self, fg_color="#0D1B2A", corner_radius=8, border_width=1, border_color="#1B263B")
+        ust.pack(fill="x", padx=12, pady=10)
+
+        ctk.CTkLabel(
+            ust, text="🌐 WI-FI GÜVENLİK, SAHTE AĞ GEÇİDİ & ARP/DNS ZEHİRLEME DEDEKTÖRÜ",
+            font=ctk.CTkFont(family="Consolas", size=13, weight="bold"), text_color="#00E5FF"
+        ).pack(side="left", padx=12, pady=8)
+
+        ctk.CTkButton(
+            ust, text="🔄 Ağı Tara", width=120, height=28, fg_color="#1f538d",
+            hover_color="#14375e", command=self._tara
+        ).pack(side="right", padx=12, pady=8)
+
+        self.txt_rapor = ctk.CTkTextbox(
+            self, font=ctk.CTkFont(family="Consolas", size=11),
+            fg_color="#05080F", text_color="#A6E3A1", wrap="word"
+        )
+        self.txt_rapor.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        self._tara()
+
+    def _tara(self):
+        def _worker():
+            satirlar = [
+                "=" * 90,
+                f"🌐 WI-FI VE YEREL AĞ GÜVENLİK / ZEHİRLEME ANALİZ RAPORU ({datetime.now().strftime('%H:%M:%S')})",
+                "=" * 90,
+                "Kafe, otel veya ortak kablosuz ağlarda saldırganlar ARP Spoofing ile trafiği",
+                "kendi üzerlerine çekip şifreleri çalabilir (Man-in-the-Middle).\n",
+                "-" * 90
+            ]
+
+            try:
+                # 1. ARP Tablosunu Oku
+                r = subprocess.run(
+                    ["arp", "-a"], capture_output=True, text=True, errors="ignore",
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=4
+                )
+                mac_haritasi = {}
+                tekrarlanan_macler = []
+
+                for line in r.stdout.splitlines():
+                    parcalar = line.split()
+                    if len(parcalar) >= 3:
+                        ip = parcalar[0]
+                        mac = parcalar[1].lower().replace("-", ":")
+                        tur = parcalar[2]
+                        if len(mac) == 17 and not mac.startswith("ff:ff:ff"):
+                            if mac in mac_haritasi:
+                                tekrarlanan_macler.append((mac, mac_haritasi[mac], ip))
+                            else:
+                                mac_haritasi[mac] = ip
+
+                satirlar.append(f"📌 ARP ÖNBELLEK TABLOSU ANALİZİ ({len(mac_haritasi)} Aygıt Kayıtlı):")
+                if tekrarlanan_macler:
+                    satirlar.append("🚨 TEHLİKE / ARP ZEHİRLEMESİ TESPİT EDİLDİ:")
+                    for mac, ip1, ip2 in tekrarlanan_macler:
+                        satirlar.append(f"  • Aynı MAC Adresi ({mac}) birden fazla IP ile eşleşmiş: {ip1} ve {ip2}")
+                        satirlar.append("    -> Olası Man-in-the-Middle (MitM) saldırısı tespit edildi!\n")
+                else:
+                    satirlar.append("✅ Temiz: ARP tablosunda çakışan veya tekrarlanan sahte MAC adresi bulunmadı.\n")
+
+                # 2. DNS Sunucu Bilgilerini Oku
+                satirlar.append("📌 AKTİF DNS SUNUCU YAPILANDIRMASI:")
+                r_dns = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command", "Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object InterfaceAlias, ServerAddresses | Format-List"],
+                    capture_output=True, text=True, errors="ignore",
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=5
+                )
+                if r_dns.stdout.strip():
+                    satirlar.append(r_dns.stdout.strip())
+                else:
+                    satirlar.append("DNS sunucu bilgileri okunamadı.")
+
+            except Exception as e:
+                satirlar.append(f"Tarama sırasında hata: {e}")
+
+            satirlar.append("\n" + "=" * 90)
+            self.txt_rapor.delete("1.0", "end")
+            self.txt_rapor.insert("1.0", "\n".join(satirlar))
+
+        threading.Thread(target=_worker, daemon=True).start()

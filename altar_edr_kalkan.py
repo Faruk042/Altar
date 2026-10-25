@@ -30,6 +30,12 @@ try:
         USBAsisiModal,
         C2AvcisiModal,
         ButunlukKalkaniFIMModal,
+        ClipboardClipperSentinelModal,
+        SpywareKameraMikrofonModal,
+        BrowserCookieInfostealerModal,
+        EventLogSIEMModal,
+        GuvenliDosyaImhaModal,
+        ARPDNSSpoofingModal,
         statik_dosya_analiz_et,
         hosts_butunluk_denetle
     )
@@ -659,6 +665,51 @@ class AltarEDRAntivirusSekmesi(ctk.CTkFrame):
             command=self._ac_butunluk_fim
         ).pack(side="left", padx=3, pady=5)
 
+        # 2.6 PRO KALKANLAR VE ADLİ GÜVENLİK ARAÇ ÇUBUĞU
+        araclar_bar_2 = ctk.CTkFrame(self, fg_color="#0A1120", corner_radius=8, border_width=1, border_color="#1E293B")
+        araclar_bar_2.pack(side="top", fill="x", padx=6, pady=(0, 6))
+
+        ctk.CTkLabel(
+            araclar_bar_2, text="🛡️ PRO KALKANLAR:",
+            font=ctk.CTkFont(family="Consolas", size=11, weight="bold"), text_color="#38BDF8"
+        ).pack(side="left", padx=(8, 4), pady=5)
+
+        ctk.CTkButton(
+            araclar_bar_2, text="📋 Pano Kripto Koruyucu", width=150, height=26,
+            fg_color="#059669", hover_color="#047857", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_clipper_sentinel
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar_2, text="🪟 Kamera & Mic İzleyici", width=150, height=26,
+            fg_color="#D97706", hover_color="#B45309", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_kamera_mic_watcher
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar_2, text="🍪 Tarayıcı Çerez Kalkanı", width=150, height=26,
+            fg_color="#CA8A04", hover_color="#A16207", text_color="#000000", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_cookie_guard
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar_2, text="📜 SIEM Olay Günlüğü", width=140, height=26,
+            fg_color="#4F46E5", hover_color="#4338CA", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_siem_event_log
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar_2, text="🧹 Güvenli İmha (DoD)", width=140, height=26,
+            fg_color="#DC2626", hover_color="#B91C1C", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_guvenli_imha
+        ).pack(side="left", padx=3, pady=5)
+
+        ctk.CTkButton(
+            araclar_bar_2, text="🌐 Wi-Fi & ARP Zehirlenme", width=155, height=26,
+            fg_color="#0284C7", hover_color="#0369A1", font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._ac_arp_dns_spoof
+        ).pack(side="left", padx=3, pady=5)
+
         # 3. ANA BÖLÜNMÜŞ GÖVDE (SOL: CANLI EDR MONITOR | SAĞ: SEZGİSEL TARAYICI & KARANTİNA)
         govde = ctk.CTkFrame(self, fg_color="transparent")
         govde.pack(side="top", fill="both", expand=True, padx=6, pady=(0, 6))
@@ -953,6 +1004,43 @@ class AltarEDRAntivirusSekmesi(ctk.CTkFrame):
     def _ac_butunluk_fim(self):
         if GELISMIS_GUVENLIK_AVAILABLE:
             ButunlukKalkaniFIMModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    
+    def _ac_clipper_sentinel(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            ClipboardClipperSentinelModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_kamera_mic_watcher(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            SpywareKameraMikrofonModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_cookie_guard(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            BrowserCookieInfostealerModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_siem_event_log(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            EventLogSIEMModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_guvenli_imha(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            GuvenliDosyaImhaModal(self)
+        else:
+            messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
+
+    def _ac_arp_dns_spoof(self):
+        if GELISMIS_GUVENLIK_AVAILABLE:
+            ARPDNSSpoofingModal(self)
         else:
             messagebox.showwarning("Modül Yok", "altar_gelismis_guvenlik modülü bulunamadı.", parent=self)
 
